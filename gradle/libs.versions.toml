@@ -1,0 +1,63 @@
+[versions]
+benManes-versions = "0.51.0"
+dokka = "1.9.20"
+exposed = "0.52.0"
+exposedOption = "2.0"
+hikari = "5.1.0"
+kotest = "5.9.1"
+kotlin = "2.0.0"
+kotlinx-datetime = "0.6.0"
+kotlinx-serialization = "1.7.1"
+ktor = "2.3.12"
+log4j = "2.23.1"
+mockk = "1.13.11"
+mysql-connector = "9.0.0"
+nmcp = "0.0.8"
+sentry = "7.11.0"
+slf4j = "2.0.13"
+utils = "3.0.0"
+xmlutil = "0.86.3" # Need Kotlin 2.0.20 to update to last version
+
+[libraries]
+# kotlinx
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+# ktor
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-serialization-kotlinx-xml = { module = "io.ktor:ktor-serialization-kotlinx-xml", version.ref = "ktor" }
+
+# database
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
+mysql-connector = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+
+# raysmith
+raysmith-exposedOption = { module = "ru.raysmith:exposed-option", version.ref = "exposedOption" }
+raysmith-utils = { module = "ru.raysmith:utils", version.ref = "utils" }
+
+# utils
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+sentry = { module = "io.sentry:sentry", version.ref = "sentry" }
+xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization-jvm", version.ref = "xmlutil" }
+
+# tests
+kotest = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotest-multiplatform = { id = "io.kotest.multiplatform", version.ref = "kotest" }
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+nmcp = { id = "com.gradleup.nmcp", version.ref = "nmcp" }
+benManes-versions = { id = "com.github.ben-manes.versions", version.ref = "benManes-versions" }

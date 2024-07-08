@@ -1,0 +1,3 @@
+package team.mke.utils.crashinterceptor
+
+object CrashInterceptorConfigImpl : CrashInterceptorConfig
