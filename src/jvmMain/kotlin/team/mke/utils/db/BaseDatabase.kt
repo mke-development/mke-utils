@@ -66,6 +66,16 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         connect(data)
     }
 
+    private var config: DatabaseConfig.Builder.() -> Unit = {}
+    fun config(setup: DatabaseConfig.Builder.() -> Unit) {
+        config = setup
+    }
+
+    private var hikari: HikariConfig.() -> Unit = {}
+    fun hikari(setup: HikariConfig.() -> Unit) {
+        hikari = setup
+    }
+
     fun connect(dbProperties: String = "db.properties") {
         try {
             _connection = initConnection(dbProperties).also {
@@ -98,6 +108,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
             if (Environment.isDev()) {
                 defaultMaxAttempts = 1
             }
+            config()
         }
 
         return Database.connect(hikari(dbProperties), databaseConfig = config).also {
@@ -163,6 +174,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
                 addDataSourceProperty(key as String, value)
             }
 
+            hikari()
             validate()
         }
         return HikariDataSource(config)

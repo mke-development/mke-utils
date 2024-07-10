@@ -1,5 +1,4 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import com.github.benmanes.gradle.versions.updates.resolutionstrategy.ComponentFilter
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
@@ -15,7 +14,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "1.0.0"
+version = "1.1.0"
 
 allprojects {
     repositories {
@@ -110,7 +109,7 @@ kotlin {
 }
 
 tasks {
-    withType<Test>().configureEach {
+    withType<Test> {
         useJUnitPlatform()
         jvmArgs(
             "--add-opens=java.base/java.util=ALL-UNNAMED",
