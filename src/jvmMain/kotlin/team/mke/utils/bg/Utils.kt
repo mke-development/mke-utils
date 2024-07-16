@@ -62,7 +62,7 @@ fun bgWhile(
     id: String = uuid(),
     maxIteration: Int = -1,
     block: suspend BackgroundProcess.() -> Unit
-) = object : BaseBackgroundProcess(name, crashInterceptor, id, autoStarted = start) {
+) = object : BaseBackgroundProcess(name, crashInterceptor, id = id, autoStarted = start) {
     override val mutex: Any = object {}
     override fun onCancel() {
         super.onCancel()

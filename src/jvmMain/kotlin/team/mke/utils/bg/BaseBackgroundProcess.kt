@@ -1,6 +1,8 @@
 package team.mke.utils.bg
 
 import kotlinx.coroutines.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import ru.raysmith.utils.uuid
 import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.logging.LoggableCoroutineName
@@ -14,11 +16,13 @@ import team.mke.utils.logging.LoggableCoroutineName
 abstract class BaseBackgroundProcess(
     final override val name: String,
     val crashInterceptor: CrashInterceptor<*>,
+    override val logger: Logger = LoggerFactory.getLogger("bg"),
     override val id: String = uuid(),
     val autoStarted: Boolean = true
 ) : BackgroundProcess {
     protected var job: Job? = null
     override val isActive get() = job?.isActive == true
+
 
     protected open var isReadyToRestart = !autoStarted
     protected var restartOnFinish = false
@@ -32,21 +36,20 @@ abstract class BaseBackgroundProcess(
     val handler = CoroutineExceptionHandler { _, throwable ->
         crashInterceptor.intercept(
             throwable,
-            Background.logger,
+            logger,
             "Error in background process '$name' [$id]. Process stopped."
         )
         Background.removeProcess(id)
     }
 
-    override fun cancel() = cancel(null)
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun cancel(cause: CancellationException? = null) { job?.cancel(cause) }
-    suspend fun cancelAndJoin() { job?.cancelAndJoin() }
-
-    fun stop(cause: CancellationException? = null) {
-        cancel(cause)
-        Background.removeProcess(id)
+    suspend fun join() {
+        job?.join()
     }
+
+    override fun cancel(cause: CancellationException?) {
+        job?.cancel(cause)
+    }
+    suspend fun cancelAndJoin() { job?.cancelAndJoin() }
 
     fun start() = start(true)
     override fun start(throwOnRegistered: Boolean) {
@@ -54,12 +57,13 @@ abstract class BaseBackgroundProcess(
         synchronized(mutex) {
             isReadyToRestart = false
         }
-        Background.logger.debug("Background process '$name' [$id] started...")
+        logger.debug("Background process '$name' [$id] started...")
         job = Background.scope.launch(handler + coroutineName) {
             try {
                 run()
+                logger.debug("Background process '$name' [$id] completed")
             } catch (e: Exception) {
-                crashInterceptor.intercept(e, Background.logger, "Не удалось запустить фоновый процесс $name [$id]")
+                crashInterceptor.intercept(e, logger, "Не удалось запустить фоновый процесс '$name' [$id]")
             } finally {
                 synchronized(mutex) {
                     if (restartOnFinish) {

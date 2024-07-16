@@ -12,7 +12,7 @@ object Background {
     private object Lock
     private var isClosed = false
 
-    val logger: Logger = LoggerFactory.getLogger("bg")
+    val logger: Logger by lazy { LoggerFactory.getLogger("bg") }
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val processes: MutableMap<String, BackgroundProcess> = Collections.synchronizedMap(mutableMapOf())
 

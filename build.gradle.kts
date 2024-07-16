@@ -5,16 +5,17 @@ plugins {
     java
     signing
     `maven-publish`
+    alias(libs.plugins.nmcp)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.kover)
+    alias(libs.plugins.benManes.versions)
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotest.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.dokka)
-    alias(libs.plugins.nmcp)
-    alias(libs.plugins.benManes.versions)
 }
 
 group = "team.mke"
-version = "1.1.0"
+version = "2.0.0"
 
 allprojects {
     repositories {
@@ -28,6 +29,21 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
     }
+}
+
+kover {
+    useJacoco()
+    reports {
+        total {
+            xml {
+                onCheck = true
+            }
+            html {
+                onCheck = true
+            }
+        }
+    }
+
 }
 
 kotlin {
@@ -102,7 +118,7 @@ kotlin {
                 implementation(libs.slf4j.api)
                 implementation(libs.log4j.slf4j2.impl)
                 implementation(libs.mockk)
-
+                implementation(libs.log4j.core)
             }
         }
     }

@@ -1,14 +1,13 @@
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import team.mke.utils.bg.Background
 import team.mke.utils.bg.bg
 import team.mke.utils.bg.bgWhile
-import team.mke.utils.crashinterceptor.TestCrashInterceptor
 import team.mke.utils.test.crashInterceptor
 import kotlin.time.Duration.Companion.seconds
 
@@ -40,14 +39,13 @@ class BackgroundTest : FreeSpec({
         Background.hasProcess("2").shouldBe(false)
     }
 
-    "background handle exception" {
+    "background should handle exception" {
         bg(crashInterceptor, "bg3", id = "3") {
             error("Some error")
-        }
+        }.join()
 
         delay(100)
-        crashInterceptor.shouldBeInstanceOf<TestCrashInterceptor>()
-            .totalIntercepted.shouldBe(1)
+        crashInterceptor.totalIntercepted.shouldBe(1)
     }
 
     "background stopped after cancel" {
@@ -105,5 +103,28 @@ class BackgroundTest : FreeSpec({
         delay(500)
         bg.restart() shouldBe true
         bg.stop()
+    }
+
+
+    "background should be active when running" {
+        val bg = bg(crashInterceptor, "bg9", id = "9", start = false) {
+            delay(500)
+        }
+
+        bg.isActive shouldBe false
+        bg.start()
+        bg.isActive shouldBe true
+        delay(600)
+        bg.isActive shouldBe false
+    }
+
+    "cancelAndJoin should not throw" {
+        val bg = bg(crashInterceptor, "bg10", id = "10") {
+            delay(500)
+        }
+
+        shouldNotThrowAny {
+            bg.cancelAndJoin()
+        }
     }
 })

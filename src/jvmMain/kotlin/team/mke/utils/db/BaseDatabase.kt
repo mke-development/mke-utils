@@ -3,28 +3,24 @@ package team.mke.utils.db
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 import ru.raysmith.exposedoption.Options
-import ru.raysmith.exposedoption.getOrNull
-import ru.raysmith.exposedoption.inc
-import ru.raysmith.exposedoption.option
 import ru.raysmith.utils.ms
 import ru.raysmith.utils.outcome
 import ru.raysmith.utils.properties.PropertiesFactory
 import team.mke.utils.InitiableWithArgs
 import team.mke.utils.Versionable
 import team.mke.utils.env.Environment
+import team.mke.utils.env.env
+import team.mke.utils.env.envRequired
+import team.mke.utils.logging.error
 import java.time.ZoneId
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
-import team.mke.utils.logging.error
-import team.mke.utils.env.env
-import team.mke.utils.env.envRequired
 
 const val COLLATE_UTF8MB4_UNICODE_CI = "utf8mb4_unicode_ci"
 
@@ -93,8 +89,12 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
     open fun onConnection(isTest: Boolean) {}
     open fun beforeCreateTables() {}
 
-    fun createMissingTablesAndColumns(vararg tables: Table = this.tables.toTypedArray()) = SchemaUtils.createMissingTablesAndColumns(*tables, withLogs = false)
-    fun addMissingColumnsStatements(vararg tables: Table = this.tables.toTypedArray()) = SchemaUtils.addMissingColumnsStatements(*tables, withLogs = false)
+    fun createMissingTablesAndColumns(vararg tables: Table = this.tables.toTypedArray()) {
+        SchemaUtils.createMissingTablesAndColumns(*tables, withLogs = false)
+    }
+    fun addMissingColumnsStatements(vararg tables: Table = this.tables.toTypedArray()): List<String> {
+        return SchemaUtils.addMissingColumnsStatements(*tables, withLogs = false)
+    }
 
     protected fun initConnection(dbProperties: String = "db.properties"): Database {
         Database.connect(hikari(dbProperties, useDatabase = false)).also {

@@ -138,8 +138,8 @@ fun HttpClientConfig<*>.installContentNegotiation(json: Json?, xml: XML?) = inst
 }
 
 fun HttpClientConfig<*>.installHttpRequestRetry() = install(HttpRequestRetry) {
-    retryOnException(3, retryOnTimeout = true)
-    retryOnServerErrors(5)
+    retryOnException(retryOnTimeout = true)
+    retryOnServerErrors(maxRetries = Int.MAX_VALUE)
     exponentialDelay()
 }
 
