@@ -1,15 +1,10 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.dao.Entity
-import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.time.format.DateTimeFormatter
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
-import kotlin.reflect.full.companionObjectInstance
 
 val dbDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 val dbDateTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -47,50 +42,14 @@ fun Op<Boolean>.andIf(condition: Boolean, op: Expression<Boolean>?): Op<Boolean>
 fun Op<Boolean>.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean> =
     if (condition) this and op() else this
 
-@Suppress("UNCHECKED_CAST")
-inline fun <ID: Comparable<ID>, REF: Comparable<REF>, reified R : Entity<REF>, S : Entity<ID>> S.wrapRowOrDefault(
-    alias: Alias<IdTable<ID>>? = null, defaultValue: S.() -> R?
-): R? {
-    val entityClass = R::class.companionObjectInstance as EntityClass<REF, R>
-
-    val cols = (alias ?: entityClass.table).columns
-    val b1 = readValues.hasValues(cols)
-
-    val ex = alias?.let { it[entityClass.table.id] } ?: entityClass.table.id
-    val b2 = readValues.getOrNull(ex) != null
-
-    return if (b1 && b2) {
-        if (alias != null) {
-            entityClass.wrapRow(readValues, alias)
-        } else {
-            entityClass.wrapRow(readValues)
-        }
-    }
-    else this.defaultValue()
-}
-
 fun ResultRow.hasValues(c: List<Column<*>>) = c.all { this.hasValue(it) }
 
 inline fun <T> withCurrentTransaction(block: Transaction.() -> T) = with(TransactionManager.current(), block)
 
-context(E)
-inline fun <ID : Comparable<ID>, reified E : Entity<ID>, RID : Comparable<RID>, reified R : Entity<RID>> EntityClass<RID, R>.optionalReferencedOn(
-    column: Column<EntityID<ID>?>,
-    alias: Alias<IdTable<ID>>
-): ReadWriteProperty<Any?, R?> {
-    val entity = this@E
-
-    return object : ReadWriteProperty<Any?, R?> {
-        val ref = optionalReferencedOn(column)
-
-        override fun getValue(thisRef: Any?, property: KProperty<*>): R? {
-            return wrapRowOrDefault(alias) {
-                ref.getValue(this, property)
-            }
-        }
-
-        override fun setValue(thisRef: Any?, property: KProperty<*>, value: R?) {
-            ref.setValue(entity, property, value)
-        }
-    }
+val Column<String?>.length @JvmName("nullableLengthExt") get() = this.columnType.length(table, this)
+val Column<String>.length @JvmName("lengthExt") get() = this.columnType.length(table, this)
+private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(this) {
+    is TextColumnType -> 65535
+    is VarCharColumnType -> colLength
+    else -> throw UnsupportedOperationException("Unsupported type of string column `${table.tableName}`.`${column.name}`")
 }

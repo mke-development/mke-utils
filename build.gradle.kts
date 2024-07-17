@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.0.0"
+version = "2.1.0"
 
 allprojects {
     repositories {
@@ -100,6 +100,7 @@ kotlin {
                 api(libs.xmlutil.serialization.jvm)
                 api(libs.exposed.core)
                 api(libs.exposed.dao)
+                api(libs.exposed.java.time)
                 api(libs.hikari)
                 api(libs.ktor.server.core.jvm)
 

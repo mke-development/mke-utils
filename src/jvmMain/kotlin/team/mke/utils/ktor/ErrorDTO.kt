@@ -11,7 +11,7 @@ import java.time.ZonedDateTime
 @Serializable
 data class ErrorDTO(
     @EncodeDefault val message: String = "Ошибка",
-    val description: String?,
+    @EncodeDefault val description: String? = null,
     val path: String,
     val method: String,
     @Contextual val timestamp: ZonedDateTime = nowZoned(),
