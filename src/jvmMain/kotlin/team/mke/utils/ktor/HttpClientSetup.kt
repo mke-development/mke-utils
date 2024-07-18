@@ -4,11 +4,13 @@ package team.mke.utils.ktor
 
 import io.ktor.client.*
 import io.ktor.client.engine.*
+import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
+import io.ktor.client.utils.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.xml.*
 import kotlinx.serialization.json.Json
@@ -29,6 +31,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.utils.io.*
 import java.lang.Exception
 
 // --------------------------------------------------- JSON ------------------------------------------------------------
@@ -137,10 +140,23 @@ fun HttpClientConfig<*>.installContentNegotiation(json: Json?, xml: XML?) = inst
     }
 }
 
+private fun Throwable.isTimeoutException(): Boolean {
+    val exception = unwrapCancellationException()
+    return exception is HttpRequestTimeoutException ||
+            exception is ConnectTimeoutException ||
+            exception is SocketTimeoutException
+}
+
 fun HttpClientConfig<*>.installHttpRequestRetry() = install(HttpRequestRetry) {
-    retryOnException(retryOnTimeout = true)
-    retryOnServerErrors(maxRetries = Int.MAX_VALUE)
     exponentialDelay()
+
+    retryOnServerErrors(maxRetries = Int.MAX_VALUE)
+    retryOnExceptionIf(Int.MAX_VALUE) { _, cause ->
+        when {
+            cause.isTimeoutException() -> true
+            else -> false
+        }
+    }
 }
 
 fun HttpRequestBuilder.acceptApplicationJson() = headers.set(HttpHeaders.Accept, ContentType.Application.Json.toString())
