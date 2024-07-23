@@ -118,6 +118,9 @@ fun defaultHttpClient(
         installContentNegotiation(json, xml)
     }
     installHttpRequestRetry()
+    install(HttpSend) {
+        maxSendCount = Int.MAX_VALUE
+    }
 
     block(this)
 }
@@ -140,7 +143,7 @@ fun HttpClientConfig<*>.installContentNegotiation(json: Json?, xml: XML?) = inst
     }
 }
 
-private fun Throwable.isTimeoutException(): Boolean {
+internal fun Throwable.isTimeoutException(): Boolean {
     val exception = unwrapCancellationException()
     return exception is HttpRequestTimeoutException ||
             exception is ConnectTimeoutException ||

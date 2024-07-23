@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.1.1"
+version = "2.1.2"
 
 allprojects {
     repositories {
@@ -114,6 +114,7 @@ kotlin {
                 implementation(libs.kotest)
                 implementation(libs.raysmith.utils)
                 implementation(libs.kotest.assertions.core)
+                implementation(libs.ktor.client.okhttp)
                 implementation(kotlin("reflect"))
 
                 implementation(libs.slf4j.api)
