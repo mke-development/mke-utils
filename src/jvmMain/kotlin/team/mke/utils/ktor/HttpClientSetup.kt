@@ -23,16 +23,14 @@ import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig
 import ru.raysmith.utils.safe
 import team.mke.utils.env.Environment
-import team.mke.utils.serialization.BigDecimalSerializer
-import team.mke.utils.serialization.KotlinxLocalDateSerializer
-import team.mke.utils.serialization.LocalDateSerializer
-import team.mke.utils.serialization.ZonedDateTimeSerializer
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.*
+import team.mke.utils.serialization.*
 import java.lang.Exception
+import java.time.LocalTime
 
 // --------------------------------------------------- JSON ------------------------------------------------------------
 
@@ -79,6 +77,7 @@ private fun JsonBuilder.applyDefaultJson() {
     prettyPrint = Environment.isDev()
     serializersModule = SerializersModule {
         contextual(LocalDate::class, LocalDateSerializer)
+        contextual(LocalTime::class, LocalTimeSerializer)
         contextual(ZonedDateTime::class, ZonedDateTimeSerializer)
         contextual(BigDecimal::class, BigDecimalSerializer)
         safe {
