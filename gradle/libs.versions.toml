@@ -2,7 +2,7 @@
 benManes-versions = "0.51.0"
 dokka = "1.9.20"
 exposed = "0.52.0"
-exposedOption = "2.0"
+exposedOption = "2.1"
 hikari = "5.1.0"
 kotest = "5.9.1"
 kotlin = "2.0.0"
@@ -16,7 +16,7 @@ mysql-connector = "9.0.0"
 nmcp = "0.0.8"
 sentry = "7.11.0"
 slf4j = "2.0.13"
-utils = "3.0.0"
+utils = "3.1.0"
 xmlutil = "0.86.3" # Need Kotlin 2.0.20 to update to last version
 log4j-core = "2.23.1"
 
