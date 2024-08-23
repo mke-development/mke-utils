@@ -2,6 +2,7 @@ package team.mke.utils.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.jetbrains.exposed.dao.flushCache
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
@@ -85,6 +86,19 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         }
     }
 
+    fun disconnect() {
+        _connection?.also {
+            transaction { flushCache() }
+            TransactionManager.closeAndUnregister(it)
+            it.connector().close()
+        }
+        super.close()
+    }
+
+    override fun close() {
+        disconnect()
+    }
+
     /** Called after creation connection */
     open fun onConnection(isTest: Boolean) {}
     open fun beforeCreateTables() {}
@@ -125,7 +139,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
 
                 var databaseVersion = exec("SELECT * FROM `options` WHERE `key` = 'VERSION'") { rs ->
                     if (rs.next()) rs.getString(2).toInt() else run {
-                        exec("INSERT INTO `options` (`key`, `value`) VALUES ('VERSION', '1')")
+                        exec("INSERT INTO `options` (`key`, `value`) VALUES ('VERSION', '$version')")
                         version
                     }
                 }!!
