@@ -5,6 +5,7 @@ package team.mke.utils
 import org.slf4j.Logger
 import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.logging.tags
+import java.math.BigDecimal
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -63,3 +64,5 @@ fun argsToProperties(args: Array<String>) {
         }
     }
 }
+
+fun List<BigDecimal>.sum(): BigDecimal = sumOf { it }
