@@ -2,26 +2,18 @@
 
 package team.mke.utils
 
-import io.sentry.Scope
-import io.sentry.Sentry
 import org.slf4j.Logger
-import ru.raysmith.utils.ms
 import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.logging.tags
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
-import java.time.temporal.Temporal
 import java.util.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 // TODO clear
 

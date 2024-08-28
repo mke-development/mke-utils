@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.4.0"
+version = "2.5.0"
 
 allprojects {
     repositories {
@@ -94,6 +94,7 @@ kotlin {
                 api(libs.ktor.client.core)
                 api(libs.ktor.client.logging)
                 api(libs.ktor.client.auth)
+                api(libs.ktor.client.okhttp)
                 api(libs.ktor.client.contentNegotiation)
                 api(libs.ktor.serialization.kotlinx.xml)
                 api(libs.ktor.serialization.kotlinx.json)
