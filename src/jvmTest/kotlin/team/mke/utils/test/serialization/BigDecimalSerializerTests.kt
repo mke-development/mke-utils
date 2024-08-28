@@ -15,6 +15,7 @@ class BigDecimalSerializerTests : FreeSpec({
         Json.encodeToString(BigDecimalSerializer, BigDecimal.valueOf(0.123456789)) shouldBe "0.12345679"
         Json.encodeToString(BigDecimalSerializer, BigDecimal.valueOf(0.1 + 0.2)) shouldBe "0.3"
         Json.encodeToString(BigDecimalSerializer, BigDecimal.valueOf(0.000001)) shouldBe "0.000001"
+        Json.encodeToString(BigDecimalSerializer, BigDecimal.valueOf(0.0000012345)) shouldBe "0.00000123"
     }
 
     "deserialization" {
@@ -24,5 +25,6 @@ class BigDecimalSerializerTests : FreeSpec({
         Json.decodeFromString(BigDecimalSerializer, "0.123456781") shouldBe BigDecimal("0.123456781")
         Json.decodeFromString(BigDecimalSerializer, "0.123456789") shouldBe BigDecimal("0.123456789")
         Json.decodeFromString(BigDecimalSerializer, "0.000001") shouldBe BigDecimal("0.000001")
+        Json.decodeFromString(BigDecimalSerializer, "0.0000012345") shouldBe BigDecimal("0.0000012345")
     }
 })

@@ -17,7 +17,8 @@ import java.math.RoundingMode
 
 /** @sample team.mke.utils.test.serialization.BigDecimalSerializerTests */
 object BigDecimalSerializer: KSerializer<BigDecimal> {
-    val mathContext = MathContext(8, RoundingMode.HALF_UP)
+    const val scale = 8
+    val roundingMode = RoundingMode.HALF_UP
 
     override fun deserialize(decoder: Decoder): BigDecimal {
         return when(decoder) {
@@ -28,7 +29,7 @@ object BigDecimalSerializer: KSerializer<BigDecimal> {
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: Encoder, value: BigDecimal) {
-        val rounded = value.round(mathContext).toPlainString().dropLastWhile { it == '0' }
+        val rounded = value.setScale(scale, roundingMode).toPlainString().dropLastWhile { it == '0' }
             .ifEmpty { "0.0" }
             .let { if (it.lastOrNull() == '.') "${it}0" else it }
 
