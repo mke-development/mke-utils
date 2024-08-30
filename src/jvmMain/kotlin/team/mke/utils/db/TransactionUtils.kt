@@ -1,4 +1,4 @@
-package team.mke.utils.exposed
+package team.mke.utils.db
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
