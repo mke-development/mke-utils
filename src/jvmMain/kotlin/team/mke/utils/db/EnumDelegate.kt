@@ -76,7 +76,7 @@ class EnumDelegate<CID : Comparable<CID>, C : Entity<CID>, ENTITY : EnumEntity<E
     operator fun setValue(thisRef: C, property: KProperty<*>, value: List<E>?) {
         transaction {
             val currentValue = getValue(thisRef, property)
-            if (value != null && currentValue.containsAll(value) || value.isNullOrEmpty() && currentValue.isEmpty()) {
+            if (value != null && value.size == currentValue.size && currentValue.containsAll(value) || value.isNullOrEmpty() && currentValue.isEmpty()) {
                 return@transaction
             }
 
