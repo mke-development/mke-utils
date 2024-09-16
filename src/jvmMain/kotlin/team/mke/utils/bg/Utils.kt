@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.seconds
 fun bg(
     crashInterceptor: CrashInterceptor<*>,
     name: String,
-    startDelay: Duration = 0.seconds,
+    startDelay: () -> Duration = { 0.seconds },
     logger: Logger = Background.logger,
     start: Boolean = true,
     onCancel: () -> Unit = {},
@@ -55,7 +55,7 @@ fun bgWhile(
     crashInterceptor: CrashInterceptor<*>,
     name: String,
     delay: () -> Duration,
-    startDelay: Duration = 0.seconds,
+    startDelay: () -> Duration = { 0.seconds },
     logger: Logger = Background.logger,
     start: Boolean = true,
     onCancel: () -> Unit = {},
@@ -69,14 +69,15 @@ fun bgWhile(
         onCancel()
     }
     override fun run() {
+        val sd = startDelay()
         synchronized(mutex) {
-            if (startDelay == ZERO) {
+            if (sd == ZERO) {
                 isReadyToRestart = false
             }
         }
 
         job = Background.scope.launch(handler + coroutineName) {
-            delay(startDelay)
+            delay(sd)
             while (isActive) {
                 synchronized(mutex) { isReadyToRestart = false }
                 safe(crashInterceptor, logger) {
