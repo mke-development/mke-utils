@@ -35,15 +35,14 @@ private val dbDriver by env("DB_DRIVER", "com.mysql.cj.jdbc.Driver")
 
 // TODO docs; example
 @Suppress("SqlNoDataSourceInspection")
-abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
+abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     companion object {
         const val NO_MIGRATION = -1
         val logger = LoggerFactory.getLogger("database")!!
-        lateinit var properties: Properties
-            private set
-
-        val timeZone by lazy { ZoneId.of(properties["serverTimezone"]?.toString() ?: "UTC") }
     }
+
+    private var properties: Properties? = null
+    val timeZone by lazy { ZoneId.of(properties?.get("serverTimezone")?.toString() ?: "UTC") }
 
     private val isTest = dbHost.contains(":h2")
     abstract val tables: List<Table>
@@ -56,7 +55,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         init("db.properties")
     }
 
-    override fun init(data: String) {
+    override fun init(data: String?) {
         if (isInit) return
         super.init()
 
@@ -73,7 +72,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         hikari = setup
     }
 
-    fun connect(dbProperties: String = "db.properties") {
+    fun connect(dbProperties: String? = "db.properties") {
         try {
             _connection = initConnection(dbProperties).also {
                 transaction {
@@ -110,7 +109,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         return SchemaUtils.addMissingColumnsStatements(*tables, withLogs = false)
     }
 
-    protected fun initConnection(dbProperties: String = "db.properties"): Database {
+    protected fun initConnection(dbProperties: String? = "db.properties"): Database {
         Database.connect(hikari(dbProperties, useDatabase = false)).also {
             transaction {
                 SchemaUtils.createDatabase(dbName)
@@ -161,8 +160,8 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         }
     }
 
-    private fun hikari(dbProperties: String, useDatabase: Boolean = true): HikariDataSource {
-        properties = PropertiesFactory.from(dbProperties)
+    private fun hikari(dbProperties: String? = null, useDatabase: Boolean = true): HikariDataSource {
+        properties = dbProperties?.let { PropertiesFactory.from(it) }
 
         val baseUrl = dbHost + (dbPort?.let { ":$it" } ?: "")
         val jdbc = if (isTest) {
@@ -170,7 +169,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
         } else {
             val builder = StringBuilder("jdbc:mysql://$baseUrl${useDatabase.outcome("/$dbName", "")}?")
 
-            properties.forEach { (key, value) ->
+            properties?.forEach { (key, value) ->
                 builder.append("$key=$value&")
             }
             builder.dropLast(1).toString()
@@ -188,7 +187,7 @@ abstract class BaseDatabase : InitiableWithArgs<String>(), Versionable {
                 addDataSourceProperty(key as String, value)
             }
 
-            hikari()
+            hikari.invoke(this)
             validate()
         }
         return HikariDataSource(config)
