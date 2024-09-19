@@ -116,14 +116,9 @@ private val timeTolerance by env("BG_DAILY_EVENT_DELAY_TOLERANCE", 300) { it.toI
  * */
 fun getDailyDelay(lastInvocation: LocalDate, time: LocalTime, now: LocalDateTime = now()): Duration {
     return when {
-        lastInvocation == today() -> ChronoUnit.MILLIS.between(now, now.plusDays(1).with(time)).ms
-        else -> {
-            if (now.toLocalTime() <= time || ChronoUnit.MINUTES.between(time, now.toLocalTime()) <= timeTolerance.seconds.inWholeMinutes) {
-                getDelayTo(now.toLocalDate(), time, now)
-            } else {
-                getDelayTo(now.plusDays(1).toLocalDate(), time, now)
-            }
-        }
+        lastInvocation >= today() -> ChronoUnit.MILLIS.between(now, now.plusDays(1).with(time)).ms
+        now.toLocalTime() <= time || ChronoUnit.MINUTES.between(time, now.toLocalTime()) <= timeTolerance.seconds.inWholeMinutes -> getDelayTo(now.toLocalDate(), time, now)
+        else -> getDelayTo(now.plusDays(1).toLocalDate(), time, now)
     }
 }
 
