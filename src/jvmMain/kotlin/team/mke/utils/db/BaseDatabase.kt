@@ -49,6 +49,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     val connection: Database get() = _connection ?: error("Can't provide connection before call Database.connect()")
     private var _connection: Database? = null
 
+    context(Transaction)
     abstract fun migration(connection: Database, toVersion: Int)
 
     override fun init() {
@@ -145,8 +146,10 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
 
                 while(databaseVersion < version && version != NO_MIGRATION) {
                     exposedLogger.info("Start migration from $databaseVersion to ${databaseVersion + 1}...")
-                    migration(it, databaseVersion + 1)
-                    exec("UPDATE `options` SET `value` = '${++databaseVersion}' WHERE `key` = 'VERSION'")
+                    transaction {
+                        migration(it, databaseVersion + 1)
+                        exec("UPDATE `options` SET `value` = '${++databaseVersion}' WHERE `key` = 'VERSION'")
+                    }
                 }
 
                 unregisterInterceptor(loggerInterceptor)
