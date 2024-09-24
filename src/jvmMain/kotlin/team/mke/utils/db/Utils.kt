@@ -1,5 +1,8 @@
 package team.mke.utils.db
 
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.exceptions.EntityNotFoundException
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.*
@@ -52,4 +55,14 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
     is TextColumnType -> 65535
     is VarCharColumnType -> colLength
     else -> throw UnsupportedOperationException("Unsupported type of string column `${table.tableName}`.`${column.name}`")
+}
+
+/**
+ * Gets an [Entity] by its [id] value or throw [EntityNotFoundException] if entity does not exist.
+ *
+ * @param id The id value of the entity.
+ * @return The entity that has this id value, or `null` if no entity was found.
+ */
+inline fun <ID : Comparable<ID>, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID): T {
+    return findById(id).orThrow(id)
 }
