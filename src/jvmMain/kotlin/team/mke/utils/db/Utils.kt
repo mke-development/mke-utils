@@ -7,6 +7,8 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import ru.raysmith.exposedoption.Options
+import ru.raysmith.utils.endOfWord
 import java.time.format.DateTimeFormatter
 
 val dbDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -65,4 +67,18 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
  */
 inline fun <ID : Comparable<ID>, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID): T {
     return findById(id).orThrow(id)
+}
+
+@JvmName("requireLengthNullable")
+fun requireLength(column: Column<String?>, string: String?, error: (symbols: String) -> String) {
+    if (string == null) return
+    require(column.length >= string.length) {
+        error(Options.value.length.endOfWord(listOf("символа", "символов", "символов")))
+    }
+}
+
+fun requireLength(column: Column<String>, string: String, error: (symbols: String) -> String) {
+    require(column.length >= string.length) {
+        error(Options.value.length.endOfWord(listOf("символа", "символов", "символов")))
+    }
 }

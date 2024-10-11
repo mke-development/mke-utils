@@ -28,7 +28,7 @@ const val COLLATE_UTF8MB4_UNICODE_CI = "utf8mb4_unicode_ci"
 // TODO readme
 private val dbUser by envRequired("DB_USER")
 private val dbPass by envRequired("DB_PASS")
-private val dbName by env("DB_NAME", "fk")
+private val dbName by envRequired("DB_NAME")
 private val dbHost by env("DB_HOST", "localhost")
 private val dbPort by env("DB_PORT") { it.toInt() }
 private val dbDriver by env("DB_DRIVER", "com.mysql.cj.jdbc.Driver")

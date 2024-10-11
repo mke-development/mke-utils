@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.7.1"
+version = "2.8.0"
 
 allprojects {
     repositories {
@@ -104,6 +104,8 @@ kotlin {
                 api(libs.exposed.java.time)
                 api(libs.hikari)
                 api(libs.ktor.server.core.jvm)
+                api(libs.javax.mail)
+                api(libs.markdown)
 
                 implementation(libs.raysmith.utils)
                 implementation(libs.raysmith.exposedOption)

@@ -2,6 +2,7 @@
 
 package team.mke.utils
 
+import io.ktor.util.reflect.*
 import org.slf4j.Logger
 import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.logging.tags
@@ -14,6 +15,7 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
+import kotlin.reflect.full.isSubclassOf
 import kotlin.time.Duration
 
 // TODO clear
@@ -66,3 +68,13 @@ fun argsToProperties(args: Array<String>) {
 }
 
 fun List<BigDecimal>.sum(): BigDecimal = sumOf { it }
+
+inline fun <reified T> Throwable.findCause(): Throwable? {
+    return findCause(typeInfo<T>())
+}
+
+fun Throwable.findCause(vararg typeInfo: TypeInfo): Throwable? {
+    if (cause == null) return null
+    if (typeInfo.any { cause!!::class.isSubclassOf(it.type) }) return cause!!
+    return cause!!.findCause(*typeInfo)
+}

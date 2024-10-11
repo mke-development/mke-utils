@@ -87,7 +87,7 @@ object SmsIntApi {
         }
 
         suspend fun voice(phone: String, message: String): SmsApiResult<SmsIntSendResponse> = request {
-            client.post("/voice/send/text") {
+            client.post("voice/send/text") {
                 setBody(SmsIntSendBody(listOf(Message(phone, message))))
             }
         }
