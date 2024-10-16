@@ -5,6 +5,7 @@ package team.mke.utils
 import io.ktor.util.reflect.*
 import org.slf4j.Logger
 import team.mke.utils.crashinterceptor.CrashInterceptor
+import team.mke.utils.logging.ErrorTag
 import team.mke.utils.logging.tags
 import java.math.BigDecimal
 import java.time.ZoneId
@@ -31,7 +32,7 @@ val hoursFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH", Locale.fo
 val minutesFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("mm", Locale.forLanguageTag("ru"))
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> safe(crashInterceptor: CrashInterceptor<*>, logger: Logger, block: () -> T): T? {
+inline fun <T> safe(crashInterceptor: CrashInterceptor<*>, logger: Logger, vararg tags: ErrorTag, block: () -> T): T? {
     contract {
         callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
@@ -41,7 +42,7 @@ inline fun <T> safe(crashInterceptor: CrashInterceptor<*>, logger: Logger, block
     } catch (e: CancellationException) {
         null
     } catch (e: Exception) {
-        crashInterceptor.intercept(e, logger, null, *tags(e))
+        crashInterceptor.intercept(e, logger, null, *tags(e, *tags))
         null
     }
 }
