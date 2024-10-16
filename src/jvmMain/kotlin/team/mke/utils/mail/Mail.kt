@@ -50,9 +50,9 @@ class Mail(
 
     override fun folders(): Array<Folder> = store.defaultFolder.list()
 
-    fun findFolder(name: String) = folders().find { it.name == name }
+    override fun findFolder(name: String) = folders().find { it.name == name }
 
-    val defaultFolder by lazy { folders().find { it.name == defaultFolderName }
+    override val defaultFolder by lazy { folders().find { it.name == defaultFolderName }
         ?: throw NotFoundException("Default folder '$defaultFolderName' not found") }
 
     fun send(block: MimeMessage.() -> Unit) {
@@ -61,9 +61,17 @@ class Mail(
     }
 
     override fun messages(folder: Folder, searchTerm: SearchTerm?): List<MailMessage> {
-        folder.open(Folder.READ_ONLY)
+        var shouldBtClosed = false
+        if (!folder.isOpen) {
+            shouldBtClosed = true
+            folder.open(Folder.READ_ONLY)
+        }
         val messages = if (searchTerm == null) folder.messages else folder.search(searchTerm)
-        return messages.map { MailMessage(it) }
+        return messages.map { MailMessage(it) }.also {
+            if (shouldBtClosed) {
+                folder.close()
+            }
+        }
     }
 
     override fun connect(authenticator: Authenticator?) = synchronized(this) {

@@ -6,7 +6,10 @@ import javax.mail.Folder
 import javax.mail.search.SearchTerm
 
 interface IMail {
+    val defaultFolder: Folder
+
     fun folders(): Array<Folder>
+    fun findFolder(name: String): Folder?
     fun messages(folder: Folder, searchTerm: SearchTerm? = null): List<MailMessage>
     fun connect(authenticator: Authenticator? = null)
     fun disconnect()
