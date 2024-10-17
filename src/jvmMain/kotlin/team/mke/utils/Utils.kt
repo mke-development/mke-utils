@@ -5,6 +5,7 @@ package team.mke.utils
 import io.ktor.util.reflect.*
 import org.slf4j.Logger
 import team.mke.utils.crashinterceptor.CrashInterceptor
+import team.mke.utils.env.env
 import team.mke.utils.logging.ErrorTag
 import team.mke.utils.logging.tags
 import java.math.BigDecimal
@@ -79,3 +80,5 @@ fun Throwable.findCause(vararg typeInfo: TypeInfo): Throwable? {
     if (typeInfo.any { cause!!::class.isSubclassOf(it.type) }) return cause!!
     return cause!!.findCause(*typeInfo)
 }
+
+val defaultTimeZone by env("TIME_ZONE", ZoneId.systemDefault()) { ZoneId.of(it) }

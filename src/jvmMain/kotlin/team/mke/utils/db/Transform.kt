@@ -1,41 +1,39 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.dao.ColumnWithTransform
 import org.jetbrains.exposed.sql.Column
-import team.mke.utils.env.env
+import org.jetbrains.exposed.sql.Table
+import team.mke.utils.defaultTimeZone
 import team.mke.utils.serialization.BigDecimalSerializer
 import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-private val defaultTimeZone by env("TIME_ZONE", ZoneId.systemDefault()) { ZoneId.of(it) }
-
+context(Table)
 @JvmName("transformToZonedDateTimeNotNull")
-fun Column<LocalDateTime>.transformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) =
-    ColumnWithTransform(this, { it.withZoneSameInstant(timeZoneId).toLocalDateTime() }, { it.atZone(timeZoneId) })
+fun Column<LocalDateTime>.transformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) = transform(
+    wrap = { it.atZone(timeZoneId) },
+    unwrap = { it.withZoneSameInstant(timeZoneId).toLocalDateTime()  }
+)
 
-fun Column<LocalDateTime?>.transformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) =
-    ColumnWithTransform(this, { it?.withZoneSameInstant(timeZoneId)?.toLocalDateTime() }, { it?.atZone(timeZoneId) })
+context(Table)
+fun Column<LocalDateTime?>.transformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) = transform(
+    wrap = { it?.atZone(timeZoneId) },
+    unwrap = { it?.withZoneSameInstant(timeZoneId)?.toLocalDateTime()  }
+)
 
-@JvmName("memoizedTransformToZonedDateTimeNotNull")
-fun Column<LocalDateTime>.memoizedTransformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) =
-    ColumnWithTransform(this, { it.withZoneSameInstant(timeZoneId).toLocalDateTime() }, { it.atZone(timeZoneId) }, true)
-
-fun Column<LocalDateTime?>.memoizedTransformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) =
-    ColumnWithTransform(this, { it?.withZoneSameInstant(timeZoneId)?.toLocalDateTime() }, { it?.atZone(timeZoneId) }, true)
-
-
-
+context(Table)
 @JvmName("transformToBigDecimalNotNull")
-fun Column<Double>.transformToBigDecimal(scale: Int = BigDecimalSerializer.scale, roundingMode: RoundingMode = BigDecimalSerializer.roundingMode) =
-    ColumnWithTransform(this, { it.toDouble() }, { it.toBigDecimal().setScale(scale, roundingMode) })
+fun Column<Double>.transformToBigDecimal(
+    scale: Int = BigDecimalSerializer.scale, roundingMode: RoundingMode = BigDecimalSerializer.roundingMode
+) = transform(
+    wrap = { it.toBigDecimal().setScale(scale, roundingMode) },
+    unwrap = { it.toDouble() }
+)
 
-fun Column<Double?>.transformToBigDecimal(scale: Int = BigDecimalSerializer.scale, roundingMode: RoundingMode = BigDecimalSerializer.roundingMode) =
-    ColumnWithTransform(this, { it?.toDouble() }, { it?.toBigDecimal()?.setScale(scale, roundingMode) })
-
-@JvmName("memoizedTransformToBigDecimalNotNull")
-fun Column<Double>.memoizedTransformToBigDecimal(scale: Int = BigDecimalSerializer.scale, roundingMode: RoundingMode = BigDecimalSerializer.roundingMode) =
-    ColumnWithTransform(this, { it.toDouble() }, { it.toBigDecimal().setScale(scale, roundingMode) }, true)
-
-fun Column<Double?>.memoizedTransformToBigDecimal(scale: Int = BigDecimalSerializer.scale, roundingMode: RoundingMode = BigDecimalSerializer.roundingMode) =
-    ColumnWithTransform(this, { it?.toDouble() }, { it?.toBigDecimal()?.setScale(scale, roundingMode) }, true)
+context(Table)
+fun Column<Double?>.transformToBigDecimal(
+    scale: Int = BigDecimalSerializer.scale, roundingMode: RoundingMode = BigDecimalSerializer.roundingMode
+) = transform(
+    wrap = { it?.toBigDecimal()?.setScale(scale, roundingMode) },
+    unwrap = { it?.toDouble() }
+)
