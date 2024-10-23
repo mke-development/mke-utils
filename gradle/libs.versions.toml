@@ -3,21 +3,21 @@ benManes-versions = "0.51.0"
 dokka = "1.9.20"
 exposed = "0.55.0"
 exposedOption = "2.1"
-hikari = "5.1.0"
+hikari = "6.0.0"
 kotest = "5.9.1"
-kotlin = "2.0.20"
-kotlinx-datetime = "0.6.0"
-kotlinx-serialization = "1.7.1"
-kover = "0.8.2"
-ktor = "2.3.12"
-log4j = "2.23.1"
-mockk = "1.13.11"
+kotlin = "2.0.21"
+kotlinx-datetime = "0.6.1"
+kotlinx-serialization = "1.7.3"
+kover = "0.8.3"
+ktor = "3.0.0"
+log4j = "2.24.1"
+mockk = "1.13.13"
 mysql-connector = "9.0.0"
-nmcp = "0.0.8"
-sentry = "7.11.0"
-slf4j = "2.0.13"
+nmcp = "0.0.9"
+sentry = "7.15.0"
+slf4j = "2.0.16"
 utils = "3.3.0"
-xmlutil = "0.90.2-beta1"
+xmlutil = "0.90.2"
 log4j-core = "2.23.1"
 
 [libraries]
@@ -52,7 +52,7 @@ sentry = { module = "io.sentry:sentry", version.ref = "sentry" }
 xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization-jvm", version.ref = "xmlutil" }
 log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-core" }
 javax-mail = { module = "com.sun.mail:javax.mail", version = "1.6.2" }
-markdown = { module = "org.jetbrains:markdown", version = "0.5.2" }
+markdown = { module = "org.jetbrains:markdown", version = "0.7.3" }
 
 # tests
 kotest = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }

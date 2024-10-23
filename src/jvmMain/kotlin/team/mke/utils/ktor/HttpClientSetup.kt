@@ -12,25 +12,11 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.utils.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.serialization.kotlinx.xml.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonBuilder
-import kotlinx.serialization.modules.SerializersModule
-import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
-import nl.adaptivity.xmlutil.XmlDeclMode
-import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
-import nl.adaptivity.xmlutil.serialization.XmlConfig
-import ru.raysmith.utils.safe
 import team.mke.utils.env.Environment
-import java.math.BigDecimal
-import java.time.LocalDate
-import java.time.ZonedDateTime
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.*
-import team.mke.utils.serialization.*
-import java.lang.Exception
-import java.time.LocalTime
 
 fun defaultHttpClient(
     engine: HttpClientEngine,
@@ -98,4 +84,4 @@ fun HttpRequestBuilder.contentTypeJson() = contentType(ContentType.Application.J
 fun HttpRequestBuilder.contentTypeXml() = contentType(ContentType.Application.Xml)
 fun HttpRequestBuilder.contentTypeProtoBuf() = contentType(ContentType.Application.ProtoBuf)
 
-fun HttpRequestBuilder.authCircuitBreaker() = attributes.put(Auth.AuthCircuitBreaker, Unit)
+fun HttpRequestBuilder.authCircuitBreaker() = attributes.put(AuthCircuitBreaker, Unit)
