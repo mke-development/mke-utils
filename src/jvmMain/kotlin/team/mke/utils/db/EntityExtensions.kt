@@ -19,6 +19,12 @@ inline fun <ID : Comparable<ID>, reified T : Entity<ID>> T?.orThrow(id: ID) = th
     throw EntityNotFoundException(EntityID(id, entityClass.table), entityClass)
 }
 
+/** Return this entity or throw [EntityNotFoundExceptionByColumn] if entity is null */
+inline fun <V : Any?, reified T : Entity<*>> T?.orThrowBy(value: V, column: Column<*>) = this ?: run {
+    val entityClass = T::class.companionObject?.objectInstance as EntityClass<*, *>
+    throw EntityNotFoundExceptionByColumn(value, column, entityClass)
+}
+
 @Suppress("UNCHECKED_CAST")
 inline fun <ID: Comparable<ID>, REF: Comparable<REF>, reified R : Entity<REF>, S : Entity<ID>> S.wrapRowOrDefault(
     alias: Alias<IdTable<ID>>? = null, defaultValue: S.() -> R?
