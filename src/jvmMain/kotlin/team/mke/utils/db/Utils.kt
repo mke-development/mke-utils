@@ -82,3 +82,11 @@ fun requireLength(column: Column<String>, string: String, error: (symbols: Strin
         error(Options.value.length.endOfWord(listOf("символа", "символов", "символов")))
     }
 }
+
+context(Transaction)
+fun <T> ignoreReferentialIntegrity(transaction: context(Transaction) () -> T) = with(TransactionManager.current()) {
+    exec("SET REFERENTIAL_INTEGRITY FALSE")
+    val res = transaction(this)
+    exec("SET REFERENTIAL_INTEGRITY TRUE")
+    return@with res
+}
