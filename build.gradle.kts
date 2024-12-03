@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.10.0"
+version = "2.11.0"
 
 allprojects {
     repositories {
@@ -47,8 +47,6 @@ kover {
 }
 
 kotlin {
-
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-receivers")
     }

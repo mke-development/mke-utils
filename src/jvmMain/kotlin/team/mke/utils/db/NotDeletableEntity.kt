@@ -11,7 +11,7 @@ import ru.raysmith.utils.nowZoned
 import java.time.ZonedDateTime
 
 /** Represents an entity that can't be removed from the database */
-abstract class NotDeletableEntity<T : Comparable<T>>(id: EntityID<T>, table: NotDeletableTable<T>) : Entity<T>(id) {
+abstract class NotDeletableEntity<T : Any>(id: EntityID<T>, table: NotDeletableTable<T>) : Entity<T>(id) {
     var dateDeleted: ZonedDateTime? by table.dateDeleted
 
     override fun delete() {
@@ -22,7 +22,7 @@ abstract class NotDeletableEntity<T : Comparable<T>>(id: EntityID<T>, table: Not
 }
 
 /** Represents table for [NotDeletableEntity] */
-abstract class NotDeletableTable<T : Comparable<T>>(name: String = "") : IdTable<T>(name) {
+abstract class NotDeletableTable<T : Any>(name: String = "") : IdTable<T>(name) {
 
     val dateDeleted = datetime("date_deleted").nullable().index().transformToZonedDateTime()
 

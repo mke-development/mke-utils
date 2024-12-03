@@ -14,7 +14,7 @@ import kotlin.reflect.full.companionObjectInstance
 
 /** Return this entity or throw [EntityNotFoundException] if entity is null */
 @Suppress("UNCHECKED_CAST")
-inline fun <ID : Comparable<ID>, reified T : Entity<ID>> T?.orThrow(id: ID) = this ?: run {
+inline fun <ID : Any, reified T : Entity<ID>> T?.orThrow(id: ID) = this ?: run {
     val entityClass = T::class.companionObject?.objectInstance as EntityClass<ID, *>
     throw EntityNotFoundException(EntityID(id, entityClass.table), entityClass)
 }
@@ -26,7 +26,7 @@ inline fun <V : Any?, reified T : Entity<*>> T?.orThrowBy(value: V, column: Colu
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun <ID: Comparable<ID>, REF: Comparable<REF>, reified R : Entity<REF>, S : Entity<ID>> S.wrapRowOrDefault(
+inline fun <ID : Any, REF: Any, reified R : Entity<REF>, S : Entity<ID>> S.wrapRowOrDefault(
     alias: Alias<IdTable<ID>>? = null, defaultValue: S.() -> R?
 ): R? {
     val entityClass = R::class.companionObjectInstance as EntityClass<REF, R>
@@ -48,7 +48,7 @@ inline fun <ID: Comparable<ID>, REF: Comparable<REF>, reified R : Entity<REF>, S
 }
 
 context(E)
-inline fun <ID : Comparable<ID>, reified E : Entity<ID>, RID : Comparable<RID>, reified R : Entity<RID>> EntityClass<RID, R>.optionalReferencedOn(
+inline fun <ID : Any, reified E : Entity<ID>, RID : Any, reified R : Entity<RID>> EntityClass<RID, R>.optionalReferencedOn(
     column: Column<EntityID<ID>?>,
     alias: Alias<IdTable<ID>>
 ): ReadWriteProperty<Any?, R?> {

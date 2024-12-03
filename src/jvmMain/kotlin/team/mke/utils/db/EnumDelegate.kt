@@ -35,7 +35,7 @@ abstract class EnumRelationshipTable<E : Enum<E>>(name: String, columnName: Stri
  * @param entity DAO
  * @param relationshipTable Таблица отношений
  * */
-inline fun <ID: Comparable<ID>, T : Entity<ID>, ENTITY : EnumEntity<E>, reified E : Enum<E>, R : EnumRelationshipTable<E>> T.enumDelegate(
+inline fun <ID: Any, T : Entity<ID>, ENTITY : EnumEntity<E>, reified E : Enum<E>, R : EnumRelationshipTable<E>> T.enumDelegate(
     entity: IntEntityClass<ENTITY>, relationshipTable: R, alias: ExpressionAlias<String>? = null,
     noinline find: (table: R) -> Op<Boolean>,
 ): EnumDelegate<ID, T, ENTITY, E, R> {
@@ -50,7 +50,7 @@ inline fun <ID: Comparable<ID>, T : Entity<ID>, ENTITY : EnumEntity<E>, reified 
  *
  * @see [enumDelegate]
  * */
-class EnumDelegate<CID : Comparable<CID>, C : Entity<CID>, ENTITY : EnumEntity<E>, E : Enum<E>, R : EnumRelationshipTable<E>>(
+class EnumDelegate<CID : Any, C : Entity<CID>, ENTITY : EnumEntity<E>, E : Enum<E>, R : EnumRelationshipTable<E>>(
     val kClass: KClass<E>,
     val context: C,
     val table: EnumTable<E>, val enumEntityCompanion: IntEntityClass<ENTITY>, val relationshipTable: R,

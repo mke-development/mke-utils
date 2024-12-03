@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter
 val dbDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 val dbDateTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-fun <ID : Comparable<ID>> ID.toEntityID(table: IdTable<ID>) = EntityID(this, table)
+fun <ID : Any> ID.toEntityID(table: IdTable<ID>) = EntityID(this, table)
 
 /** Create SQL operator from [expression]. Return [Op.TRUE] if [T] is null */
 context(SqlExpressionBuilder)
@@ -65,7 +65,7 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
  * @param id The id value of the entity.
  * @return The entity that has this id value, or `null` if no entity was found.
  */
-inline fun <ID : Comparable<ID>, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID): T {
+inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID): T {
     return findById(id).orThrow(id)
 }
 
