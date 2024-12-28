@@ -25,26 +25,26 @@ inline fun <V : Any?, reified T : Entity<*>> T?.orThrowBy(value: V, column: Colu
     throw EntityNotFoundExceptionByColumn(value, column, entityClass)
 }
 
-@Suppress("UNCHECKED_CAST")
-inline fun <ID : Any, REF: Any, reified R : Entity<REF>, S : Entity<ID>> S.wrapRowOrDefault(
-    alias: Alias<IdTable<ID>>? = null, defaultValue: S.() -> R?
-): R? {
-    val entityClass = R::class.companionObjectInstance as EntityClass<REF, R>
+inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<ID>> SOURCE.wrapRowOrDefault(
+    alias: Alias<IdTable<ID>>? = null, defaultValue: SOURCE.() -> REF
+): REF {
+    val entityClass = REF::class.companionObjectInstance as EntityClass<*, *>
+    val columns = (alias ?: entityClass.table).columns
 
-    val cols = (alias ?: entityClass.table).columns
-    val b1 = readValues.hasValues(cols)
-
-    val ex = alias?.let { it[entityClass.table.id] } ?: entityClass.table.id
-    val b2 = readValues.getOrNull(ex) != null
-
-    return if (b1 && b2) {
-        if (alias != null) {
-            entityClass.wrapRow(readValues, alias)
-        } else {
-            entityClass.wrapRow(readValues)
-        }
+    val idColumn = alias?.let { it[entityClass.table.id] } ?: entityClass.table.id
+    if (readValues.getOrNull(idColumn) == null) {
+        return this.defaultValue()
     }
-    else this.defaultValue()
+
+    if (!readValues.hasValues(columns)) {
+        return this.defaultValue()
+    }
+
+    return if (alias != null) {
+        entityClass.wrapRow(readValues, alias)
+    } else {
+        entityClass.wrapRow(readValues)
+    } as REF
 }
 
 context(E)
