@@ -32,6 +32,7 @@ private val dbName by envRequired("DB_NAME")
 private val dbHost by env("DB_HOST", "localhost")
 private val dbPort by env("DB_PORT") { it.toInt() }
 private val dbDriver by env("DB_DRIVER", "com.mysql.cj.jdbc.Driver")
+private val dbSchema by env("DB_SCHEMA", "jdbc:mysql")
 
 // TODO docs; example
 @Suppress("SqlNoDataSourceInspection")
@@ -170,7 +171,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         val jdbc = if (isTest) {
             dbHost
         } else {
-            val builder = StringBuilder("jdbc:mysql://$baseUrl${useDatabase.outcome("/$dbName", "")}?")
+            val builder = StringBuilder("$dbSchema://$baseUrl${useDatabase.outcome("/$dbName", "")}?")
 
             properties?.forEach { (key, value) ->
                 builder.append("$key=$value&")
