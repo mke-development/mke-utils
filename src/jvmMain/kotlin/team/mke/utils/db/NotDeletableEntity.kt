@@ -5,7 +5,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.jetbrains.exposed.sql.javatime.datetime
 import ru.raysmith.utils.nowZoned
 import java.time.ZonedDateTime
@@ -27,7 +27,7 @@ abstract class NotDeletableTable<T : Any>(name: String = "") : IdTable<T>(name) 
     val dateDeleted = datetime("date_deleted").nullable().index().transformToZonedDateTime()
 
     /** Returns path of a query that reflect the validity of the entity for any selection */
-    open fun validQueryExpression(): Op<Boolean> = dateDeleted.isNotNull()
+    open fun validQueryExpression(): Op<Boolean> = dateDeleted.isNull()
 }
 
 abstract class NotDeletableIntIdTable(name: String = "", columnName: String = "id") : NotDeletableTable<Int>(name) {
