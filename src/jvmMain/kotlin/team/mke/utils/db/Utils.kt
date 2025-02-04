@@ -73,13 +73,13 @@ inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow
 fun requireLength(column: Column<String?>, string: String?, error: (symbols: String) -> String) {
     if (string == null) return
     require(column.length >= string.length) {
-        error(Options.value.length.endOfWord(listOf("символа", "символов", "символов")))
+        error(column.length.endOfWord(listOf("символа", "символов", "символов")))
     }
 }
 
 fun requireLength(column: Column<String>, string: String, error: (symbols: String) -> String) {
     require(column.length >= string.length) {
-        error(Options.value.length.endOfWord(listOf("символа", "символов", "символов")))
+        error(column.length.endOfWord(listOf("символа", "символов", "символов")))
     }
 }
 

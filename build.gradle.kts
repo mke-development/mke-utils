@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.11.2"
+version = "2.12.0"
 
 allprojects {
     repositories {
@@ -104,6 +104,7 @@ kotlin {
                 api(libs.ktor.server.core.jvm)
                 api(libs.javax.mail)
                 api(libs.markdown)
+                api(libs.reflections)
 
                 implementation(libs.raysmith.utils)
                 implementation(libs.raysmith.exposedOption)

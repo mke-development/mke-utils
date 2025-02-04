@@ -8,6 +8,10 @@ import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.reflections.Reflections
+import org.reflections.scanners.Scanners
+import org.reflections.util.ClasspathHelper
+import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.ms
@@ -21,6 +25,7 @@ import team.mke.utils.env.envRequired
 import team.mke.utils.logging.error
 import java.time.ZoneId
 import java.util.*
+import kotlin.reflect.full.hasAnnotation
 import kotlin.time.Duration.Companion.minutes
 
 const val COLLATE_UTF8MB4_UNICODE_CI = "utf8mb4_unicode_ci"
@@ -46,7 +51,19 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     val timeZone by lazy { ZoneId.of(properties?.get("serverTimezone")?.toString() ?: "UTC") }
 
     private val isTest = dbHost.contains(":h2")
-    abstract val tables: List<Table>
+    open val tables: List<Table> by lazy {
+        val packageName = this::class.java.packageName
+        val configuration = ConfigurationBuilder()
+            .setUrls(ClasspathHelper.forPackage(packageName))
+            .setScanners(Scanners.SubTypes.filterResultsBy { true })
+
+        Reflections(configuration)
+            .getSubTypesOf(Table::class.java)
+            .filter { it.packageName.startsWith(packageName) }
+            .mapNotNull { it.kotlin.objectInstance }
+            .filter { !it::class.hasAnnotation<TransientTable>() }
+    }
+
     val connection: Database get() = _connection ?: error("Can't provide connection before call Database.connect()")
     private var _connection: Database? = null
 
