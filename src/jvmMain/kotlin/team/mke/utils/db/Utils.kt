@@ -80,20 +80,25 @@ inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow
 fun requireLength(column: Column<String?>, string: String?, error: (symbols: String) -> String) {
     if (string == null) return
     require(column.length >= string.length) {
-        error(column.length.endOfWord(listOf("символа", "символов", "символов")))
+        error(column.length.endOfWord(listOf("символ", "символа", "символов")))
     }
 }
 
 fun requireLength(column: Column<String>, string: String, error: (symbols: String) -> String) {
     require(column.length >= string.length) {
-        error(column.length.endOfWord(listOf("символа", "символов", "символов")))
+        error(column.length.endOfWord(listOf("символ", "символа", "символов")))
     }
 }
 
 context(Transaction)
-fun <T> ignoreReferentialIntegrity(transaction: context(Transaction) () -> T) = with(TransactionManager.current()) {
+fun <T> ignoreReferentialIntegrity(transaction: () -> T): T {
     exec("SET REFERENTIAL_INTEGRITY FALSE")
-    val res = transaction(this)
+    val res = transaction()
     exec("SET REFERENTIAL_INTEGRITY TRUE")
-    return@with res
+    return res
 }
+
+fun <T> Collection<T>.toSizedCollection() = SizedCollection(this)
+fun <ID : Any, T : Entity<ID>> T.toSizedCollection() = SizedCollection(this)
+infix fun <ID: Any, T : Entity<ID>> T?.eq(other: T?) = this != null && other != null && id == other.id
+infix fun <ID: Any, T : Entity<ID>> T?.neq(other: T?) = this == null || other == null || id != other.id

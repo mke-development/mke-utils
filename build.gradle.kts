@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.13.0"
+version = "2.14.1"
 
 allprojects {
     repositories {
@@ -105,9 +105,11 @@ kotlin {
                 api(libs.javax.mail)
                 api(libs.markdown)
                 api(libs.reflections)
+                api(libs.tika.core)
+                api(libs.apache.commons.imaging)
 
-                implementation(libs.raysmith.utils)
-                implementation(libs.raysmith.exposedOption)
+                api(libs.raysmith.utils)
+                api(libs.raysmith.exposedOption)
             }
         }
 

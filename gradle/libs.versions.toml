@@ -21,6 +21,8 @@ log4j-core = "2.24.2"
 markdown = "0.7.3"
 javax-mail = "1.6.2"
 reflections = "0.10.2"
+tika = "3.1.0"
+commonsImaging = "1.0.0-alpha5"
 
 [libraries]
 # kotlinx
@@ -51,10 +53,14 @@ raysmith-utils = { module = "ru.raysmith:utils", version.ref = "utils" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 sentry = { module = "io.sentry:sentry", version.ref = "sentry" }
 xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization-jvm", version.ref = "xmlutil" }
-log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-core" }
 javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javax-mail" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+
+# apache
+log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-core" }
+tika-core = { module = "org.apache.tika:tika-core", version.ref = "tika" }
+apache-commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref = "commonsImaging" }
 
 # tests
 kotest = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }

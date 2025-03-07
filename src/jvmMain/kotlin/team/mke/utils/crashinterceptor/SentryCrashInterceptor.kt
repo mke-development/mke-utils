@@ -1,5 +1,6 @@
 package team.mke.utils.crashinterceptor
 
+import io.sentry.IScope
 import io.sentry.Sentry
 import io.sentry.SentryLevel
 import io.sentry.SentryOptions
@@ -71,31 +72,36 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
     }
 
     override fun intercept(e: Throwable, logger: Logger, message: String?, tags: Map<String, Any?>?) {
-        Sentry.configureScope {
+        fun IScope.setup() {
+            clear()
             tags?.forEach { (k, v) ->
-                it.setTag(k, v.toString())
+                setTag(k, v.toString())
             }
 
             val logId = uuid()
-            it.setTag("log_id", logId)
+            setTag("log_id", logId)
             logger.error("[$logId] ${message ?: e.message} (${tags ?: "[]"})", e)
+        }
 
-            if (message != null) {
-                Sentry.captureMessage(message, SentryLevel.ERROR)
-            } else {
-                Sentry.captureException(e)
+        if (message != null) {
+            Sentry.captureMessage(message, SentryLevel.ERROR) { scope ->
+                scope.setup()
+            }
+        } else {
+            Sentry.captureException(e) { scope ->
+                scope.setup()
             }
         }
     }
 
     override fun message(message: String, logger: Logger, tags: Map<String, Any?>?) {
-        Sentry.configureScope {
+        Sentry.captureMessage(message, SentryLevel.WARNING) { scope ->
+            scope.clear()
             tags?.forEach { (k, v) ->
-                it.setTag(k, v.toString())
+                scope.setTag(k, v.toString())
             }
 
             logger.warn("$message (${tags ?: "[]"})")
-            Sentry.captureMessage(message, SentryLevel.WARNING)
         }
     }
 }
