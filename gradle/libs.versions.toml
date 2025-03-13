@@ -1,23 +1,22 @@
 [versions]
-benManes-versions = "0.51.0"
-dokka = "1.9.20"
-exposed = "0.58.0"
+benManes-versions = "0.52.0"
+dokka = "2.0.0"
+exposed = "0.60.0"
 exposedOption = "2.2"
 hikari = "6.2.1"
 kotest = "5.9.1"
-kotlin = "2.1.0"
-kotlinx-datetime = "0.6.1"
-kotlinx-serialization = "1.7.3"
-kover = "0.8.3"
-ktor = "3.0.1"
-log4j = "2.24.2"
-mockk = "1.13.13"
+kotlin = "2.1.10"
+kotlinx-datetime = "0.6.2"
+kotlinx-serialization = "1.8.0"
+kover = "0.9.1"
+ktor = "3.1.1"
+log4j = "2.24.3"
+mockk = "1.13.17"
 nmcp = "0.0.9"
-sentry = "7.18.1"
-slf4j = "2.0.16"
-utils = "3.3.2"
+sentry = "8.3.0"
+slf4j = "2.0.17"
+utils = "3.3.3"
 xmlutil = "0.90.3"
-log4j-core = "2.24.2"
 markdown = "0.7.3"
 javax-mail = "1.6.2"
 reflections = "0.10.2"
@@ -58,7 +57,7 @@ markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 
 # apache
-log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j-core" }
+log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tika" }
 apache-commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref = "commonsImaging" }
 

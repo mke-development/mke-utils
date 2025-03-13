@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.14.1"
+version = "2.15.1"
 
 allprojects {
     repositories {
@@ -70,20 +70,20 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
 
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(libs.kotest.framework.engine)
                 implementation(libs.kotest.assertions.core)
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 api(libs.slf4j.api)
                 api(libs.sentry)
@@ -113,7 +113,7 @@ kotlin {
             }
         }
 
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(libs.kotest)
                 implementation(libs.raysmith.utils)
@@ -125,6 +125,12 @@ kotlin {
                 implementation(libs.log4j.slf4j2.impl)
                 implementation(libs.mockk)
                 implementation(libs.log4j.core)
+            }
+        }
+
+        jsMain {
+            dependencies {
+                implementation(kotlinWrappers.react)
             }
         }
     }

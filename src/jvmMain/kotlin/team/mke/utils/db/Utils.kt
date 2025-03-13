@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.endOfWord
+import team.mke.utils.db.sql.exists
 import java.time.format.DateTimeFormatter
 
 val dbDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -102,3 +103,13 @@ fun <T> Collection<T>.toSizedCollection() = SizedCollection(this)
 fun <ID : Any, T : Entity<ID>> T.toSizedCollection() = SizedCollection(this)
 infix fun <ID: Any, T : Entity<ID>> T?.eq(other: T?) = this != null && other != null && id == other.id
 infix fun <ID: Any, T : Entity<ID>> T?.neq(other: T?) = this == null || other == null || id != other.id
+
+context(Transaction)
+fun EntityClass<*, *>.any(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
+    return exists(op)
+}
+
+context(Transaction)
+fun EntityClass<*, *>.none(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
+    return !exists(op)
+}
