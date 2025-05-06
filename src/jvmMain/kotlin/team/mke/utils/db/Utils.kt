@@ -70,7 +70,7 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
  */
 inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID): T {
     val entity = if (this is NotDeletableEntityClass<ID, *>) {
-        find { (table as NotDeletableTable<ID>).dateDeleted.isNull() and table.id.eq(id) }.firstOrNull() as T?
+        findById(id)?.letIf({ it.isDeleted() }) { null }
     } else {
         findById(id)
     }
