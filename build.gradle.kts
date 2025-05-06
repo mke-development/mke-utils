@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.15.1"
+version = "2.17.0"
 
 allprojects {
     repositories {
@@ -72,7 +72,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 
@@ -87,7 +87,7 @@ kotlin {
             dependencies {
                 api(libs.slf4j.api)
                 api(libs.sentry)
-                api(libs.kotlinx.serialization.json)
+
                 api(libs.kotlinx.datetime)
                 api(libs.ktor.client.core)
                 api(libs.ktor.client.logging)
@@ -107,6 +107,7 @@ kotlin {
                 api(libs.reflections)
                 api(libs.tika.core)
                 api(libs.apache.commons.imaging)
+                api(libs.ktor.swaggerUi)
 
                 api(libs.raysmith.utils)
                 api(libs.raysmith.exposedOption)

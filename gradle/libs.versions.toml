@@ -5,11 +5,11 @@ exposed = "0.60.0"
 exposedOption = "2.2"
 hikari = "6.2.1"
 kotest = "5.9.1"
-kotlin = "2.1.10"
+kotlin = "2.1.0"
 kotlinx-datetime = "0.6.2"
 kotlinx-serialization = "1.8.0"
 kover = "0.9.1"
-ktor = "3.1.1"
+ktor = "3.1.2"
 log4j = "2.24.3"
 mockk = "1.13.17"
 nmcp = "0.0.9"
@@ -22,6 +22,7 @@ javax-mail = "1.6.2"
 reflections = "0.10.2"
 tika = "3.1.0"
 commonsImaging = "1.0.0-alpha5"
+ktor-swaggerUi = "4.1.0"
 
 [libraries]
 # kotlinx
@@ -55,6 +56,7 @@ xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization
 javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javax-mail" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+ktor-swaggerUi = { module = "io.github.smiley4:ktor-swagger-ui", version.ref = "ktor-swaggerUi" }
 
 # apache
 log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }

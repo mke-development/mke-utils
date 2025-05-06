@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.endOfWord
+import ru.raysmith.utils.letIf
 import team.mke.utils.db.sql.exists
 import java.time.format.DateTimeFormatter
 
@@ -88,6 +89,18 @@ fun requireLength(column: Column<String?>, string: String?, error: (symbols: Str
 fun requireLength(column: Column<String>, string: String, error: (symbols: String) -> String) {
     require(column.length >= string.length) {
         error(column.length.endOfWord(listOf("символ", "символа", "символов")))
+    }
+}
+
+fun requireLength(length: Int, string: String, error: (symbols: String) -> String) {
+    require(length >= string.length) {
+        error(length.endOfWord(listOf("символ", "символа", "символов")))
+    }
+}
+
+fun requireLength(length: Long, string: String, error: (symbols: String) -> String) {
+    require(length >= string.length) {
+        error(length.endOfWord(listOf("символ", "символа", "символов")))
     }
 }
 
