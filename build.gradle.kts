@@ -1,196 +1,71 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    java
-    signing
-    `maven-publish`
-    alias(libs.plugins.nmcp)
-    alias(libs.plugins.dokka)
+    kotlin("multiplatform") apply false
     alias(libs.plugins.kover)
+    alias(libs.plugins.dokka) apply false
     alias(libs.plugins.benManes.versions)
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotest.multiplatform)
-    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.publish) apply false
+    `version-catalog`
+    `maven-publish`
 }
 
 group = "team.mke"
-version = "2.17.1"
+version = "3.0.0"
 
 allprojects {
-    repositories {
-        mavenCentral()
-        mavenLocal()
-        maven("https://oss.sonatype.org/content/repositories/snapshots")
-    }
-}
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
-kover {
-    useJacoco()
-    reports {
-        total {
-            xml {
-                onCheck = true
-            }
-            html {
-                onCheck = true
-            }
-        }
-    }
-
-}
-
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
-    }
-
-    jvm {
-        withJava()
-        withSourcesJar()
-    }
-
-    js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                    useFirefox()
-                }
-            }
-        }
-        nodejs()
-        binaries.executable()
-    }
-
-    sourceSets {
-        commonMain {
-            dependencies {
-                implementation(libs.kotlinx.serialization.json)
-            }
-        }
-
-        commonTest {
-            dependencies {
-                implementation(libs.kotest.framework.engine)
-                implementation(libs.kotest.assertions.core)
-            }
-        }
-
-        jvmMain {
-            dependencies {
-                api(libs.slf4j.api)
-                api(libs.sentry)
-
-                api(libs.kotlinx.datetime)
-                api(libs.ktor.client.core)
-                api(libs.ktor.client.logging)
-                api(libs.ktor.client.auth)
-                api(libs.ktor.client.okhttp)
-                api(libs.ktor.client.contentNegotiation)
-                api(libs.ktor.serialization.kotlinx.xml)
-                api(libs.ktor.serialization.kotlinx.json)
-                api(libs.xmlutil.serialization.jvm)
-                api(libs.exposed.core)
-                api(libs.exposed.dao)
-                api(libs.exposed.java.time)
-                api(libs.hikari)
-                api(libs.ktor.server.core.jvm)
-                api(libs.javax.mail)
-                api(libs.markdown)
-                api(libs.reflections)
-                api(libs.tika.core)
-                api(libs.apache.commons.imaging)
-                api(libs.ktor.swaggerUi)
-
-                api(libs.raysmith.utils)
-                api(libs.raysmith.exposedOption)
-            }
-        }
-
-        jvmTest {
-            dependencies {
-                implementation(libs.kotest)
-                implementation(libs.raysmith.utils)
-                implementation(libs.kotest.assertions.core)
-                implementation(libs.ktor.client.okhttp)
-                implementation(kotlin("reflect"))
-
-                implementation(libs.slf4j.api)
-                implementation(libs.log4j.slf4j2.impl)
-                implementation(libs.mockk)
-                implementation(libs.log4j.core)
-            }
-        }
-
-        jsMain {
-            dependencies {
-                implementation(kotlinWrappers.react)
-            }
-        }
-    }
-}
-
-tasks {
-    withType<Test> {
-        useJUnitPlatform()
-        jvmArgs(
-            "--add-opens=java.base/java.util=ALL-UNNAMED",
-            "--add-opens=java.base/java.lang=ALL-UNNAMED",
-        )
-        filter {
-            isFailOnNoMatchingTests = false
-        }
-        testLogging {
-            showExceptions = true
-            showStandardStreams = true
-            events = setOf(
-                org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
-                org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+    tasks {
+        withType<Test> {
+            useJUnitPlatform()
+            jvmArgs(
+                "--add-opens=java.base/java.util=ALL-UNNAMED",
+                "--add-opens=java.base/java.lang=ALL-UNNAMED",
             )
-            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        }
-    }
-
-    withType<PublishToMavenRepository> {
-        dependsOn(check)
-    }
-    named<DependencyUpdatesTask>("dependencyUpdates").configure {
-        val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-        val stableList = listOf("RELEASE", "FINAL", "GA")
-
-        rejectVersionIf {
-            val stableKeyword = stableList.any { candidate.version.uppercase().contains(it) }
-            val isStable = stableKeyword || regex.matches(candidate.version)
-            isStable.not()
+            filter {
+                isFailOnNoMatchingTests = false
+            }
+            testLogging {
+                showExceptions = true
+                showStandardStreams = true
+                events = setOf(
+                    org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+                    org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+                )
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            }
         }
     }
 }
 
-publishing {
-    publications {
-        withType<MavenPublication> {
-            groupId = project.group.toString()
-            version = project.version.toString()
-            artifact(project.tasks.register("${name}DokkaJar", Jar::class) {
-                group = JavaBasePlugin.DOCUMENTATION_GROUP
-                description = "Assembles Kotlin docs with Dokka into a Javadoc jar"
-                archiveClassifier.set("javadoc")
-                from(tasks.named("dokkaHtml"))
-                archiveBaseName.set("${archiveBaseName.get()}-${name}")
-            })
+subprojects {
+    apply(plugin = "org.jetbrains.kotlin.multiplatform")
+    apply(plugin = "com.vanniktech.maven.publish")
+    apply(plugin = "org.jetbrains.dokka")
+
+    group = rootProject.group
+    version = rootProject.version
+
+    plugins.withId("com.vanniktech.maven.publish") {
+        configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+            publishToMavenCentral(SonatypeHost.S01, automaticRelease = false)
+            signAllPublications()
+            coordinates(group.toString(), "${rootProject.name}-${name}", version.toString())
+
+            configure(KotlinMultiplatform(
+                javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+                sourcesJar = true,
+            ))
 
             pom {
-                packaging = "jar"
-                name.set("MKE Utils")
-                url.set("https://github.com/MKE-overseas/mke-utils")
-                description.set("MKE module with utils")
+                name.set("MKE Utils • ${project.name}")
+                description.set("MKE Utils • ${project.name}")
+                url.set("https://github.com/mke-development/${rootProject.name}")
+
 
                 licenses {
                     license {
@@ -200,9 +75,9 @@ publishing {
                 }
 
                 scm {
-                    connection.set("scm:https://github.com/MKE-overseas/mke-utils.git")
-                    developerConnection.set("scm:git@github.com:MKE-overseas/mke-utils.git")
-                    url.set("https://github.com/MKE-overseas/mke-utils")
+                    connection.set("scm:https://github.com/mke-development/${rootProject.name}.git")
+                    developerConnection.set("scm:git@github.com:mke-development/${rootProject.name}.git")
+                    url.set("https://github.com/mke-development/${rootProject.name}")
                 }
 
                 developers {
@@ -215,30 +90,51 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            name = "OSSRH"
-            val releasesUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotsUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            url = if (version.toString().matches(".*(SNAPSHOT|rc.\\d+)".toRegex())) snapshotsUrl else releasesUrl
-            credentials {
-                username = System.getenv("SONATYPE_USER")
-                password = System.getenv("SONATYPE_PASS")
-            }
+}
+
+tasks {
+    named<DependencyUpdatesTask>("dependencyUpdates").configure {
+        val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+        val stableList = listOf("RELEASE", "FINAL", "GA")
+
+        rejectVersionIf {
+            val stableKeyword = stableList.any { candidate.version.uppercase().contains(it) }
+            val isStable = stableKeyword || regex.matches(candidate.version)
+            isStable.not()
         }
     }
 }
 
-signing {
-    publishing.publications.forEach {
-        sign(it)
+dependencies {
+    subprojects.forEach {
+        kover(it)
     }
 }
 
-nmcp {
-    publishAllPublications {
-        username.set(System.getenv("CENTRAL_SONATYPE_USER"))
-        password.set(System.getenv("CENTRAL_SONATYPE_PASS"))
-        publicationType.set("AUTOMATIC")
+catalog {
+    versionCatalog {
+        subprojects.forEach {
+            library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
+        }
+
+        bundle("ktor-client", listOf(
+            projects.ktorClient,
+            projects.ktorClientExtensionsJson,
+        ).map { it.name })
+
+        bundle("ktor-server", listOf(
+            projects.ktorServerOptions,
+            projects.ktorServerExtensionsDb,
+            projects.ktorServerExtensionsValidator,
+        ).map { it.name })
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("catalog") {
+            artifactId = "${rootProject.name}-catalog"
+            from(components["versionCatalog"])
+        }
     }
 }

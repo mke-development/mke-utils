@@ -2,12 +2,13 @@
 benManes-versions = "0.52.0"
 dokka = "2.0.0"
 exposed = "0.60.0"
-exposedOption = "2.2"
+exposedOption = "3.0.1"
 hikari = "6.2.1"
-kotest = "5.9.1"
+kotest = "6.0.0.M4"
 kotlin = "2.1.0"
 kotlinx-datetime = "0.6.2"
 kotlinx-serialization = "1.8.0"
+kotlinx-coroutines = "1.9.0"
 kover = "0.9.1"
 ktor = "3.1.2"
 log4j = "2.24.3"
@@ -23,11 +24,18 @@ reflections = "0.10.2"
 tika = "3.1.0"
 commonsImaging = "1.0.0-alpha5"
 ktor-swaggerUi = "4.1.0"
+kenerator = "1.6.3"
+publish = "0.32.0"
+dependency-analysis = "2.17.0"
 
 [libraries]
-# kotlinx
+# kotlin
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 # ktor
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -35,9 +43,14 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-serialization-kotlinx-xml = { module = "io.ktor:ktor-serialization-kotlinx-xml", version.ref = "ktor" }
+ktor-utils = { module = "io.ktor:ktor-utils", version.ref = "ktor" }
+ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
+ktor-io = { module = "io.ktor:ktor-io", version.ref = "ktor" }
+
+kenerator-core = { module = "io.github.smiley4:schema-kenerator-core", version.ref = "kenerator" }
 
 # database
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
@@ -52,7 +65,7 @@ raysmith-utils = { module = "ru.raysmith:utils", version.ref = "utils" }
 # utils
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 sentry = { module = "io.sentry:sentry", version.ref = "sentry" }
-xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization-jvm", version.ref = "xmlutil" }
+xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "xmlutil" }
 javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javax-mail" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
@@ -70,6 +83,9 @@ kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", versio
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 
+# gradle
+gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotest-multiplatform = { id = "io.kotest.multiplatform", version.ref = "kotest" }
@@ -78,3 +94,4 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 nmcp = { id = "com.gradleup.nmcp", version.ref = "nmcp" }
 benManes-versions = { id = "com.github.ben-manes.versions", version.ref = "benManes-versions" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }

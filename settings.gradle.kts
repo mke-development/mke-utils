@@ -8,6 +8,36 @@ pluginManagement {
     }
 }
 
+
+include("common")
+include("bg")
+include("crashInterceptor")
+include("crashInterceptor-sentry")
+include("db")
+include("env")
+include("io-validator")
+include("server")
+include("ktor-swagger")
+include("ktor-extensions")
+include("ktor-extensions-json")
+include("ktor-extensions-xml")
+include("ktor-client")
+include("ktor-client-extensions-json")
+include("ktor-server-options")
+include("ktor-server-extensions-validator")
+include("ktor-server-extensions-db")
+include("logging")
+include("mail")
+include("serialization")
+include("sms")
+include("unmd")
+include("json")
+include("xml")
+
+rootProject.children.forEach {
+    it.buildFileName = it.name + ".gradle.kts"
+}
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 @Suppress("UnstableApiUsage")
