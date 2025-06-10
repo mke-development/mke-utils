@@ -33,6 +33,7 @@ include("sms")
 include("unmd")
 include("json")
 include("xml")
+include("catalog")
 
 rootProject.children.forEach {
     it.buildFileName = it.name + ".gradle.kts"

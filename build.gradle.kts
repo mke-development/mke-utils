@@ -2,13 +2,15 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.VersionCatalog
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 
 plugins {
     kotlin("multiplatform") apply false
     alias(libs.plugins.kover)
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.benManes.versions)
-    alias(libs.plugins.publish) apply false
+    alias(libs.plugins.publish)
     `version-catalog`
     `maven-publish`
 }
@@ -43,23 +45,33 @@ allprojects {
 }
 
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.multiplatform")
+    val isCatalog = name == "catalog"
+
     apply(plugin = "com.vanniktech.maven.publish")
     apply(plugin = "org.jetbrains.dokka")
+    if (isCatalog) {
+        apply(plugin = "org.gradle.version-catalog")
+    } else {
+        apply(plugin = "org.jetbrains.kotlin.multiplatform")
+    }
 
     group = rootProject.group
     version = rootProject.version
 
     plugins.withId("com.vanniktech.maven.publish") {
-        configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
-            publishToMavenCentral(SonatypeHost.S01, automaticRelease = false)
+        configure<MavenPublishBaseExtension> {
+            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = false)
             signAllPublications()
             coordinates(group.toString(), "${rootProject.name}-${name}", version.toString())
 
-            configure(KotlinMultiplatform(
-                javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
-                sourcesJar = true,
-            ))
+            if (isCatalog) {
+                configure(VersionCatalog())
+            } else {
+                configure(KotlinMultiplatform(
+                    javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+                    sourcesJar = true,
+                ))
+            }
 
             pom {
                 name.set("MKE Utils • ${project.name}")
@@ -111,30 +123,34 @@ dependencies {
     }
 }
 
-catalog {
-    versionCatalog {
-        subprojects.forEach {
-            library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
-        }
+//catalog {
+//    versionCatalog {
+//        subprojects.forEach {
+//            library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
+//        }
+//
+//        bundle("ktor-client", listOf(
+//            projects.ktorClient,
+//            projects.ktorClientExtensionsJson,
+//        ).map { it.name })
+//
+//        bundle("ktor-server", listOf(
+//            projects.ktorServerOptions,
+//            projects.ktorServerExtensionsDb,
+//            projects.ktorServerExtensionsValidator,
+//        ).map { it.name })
+//    }
+//}
+//
+//publishing {
+//    publications {
+//        create<MavenPublication>("catalog") {
+//            artifactId = "${rootProject.name}-catalog"
+//            from(components["versionCatalog"])
+//        }
+//    }
+//}
 
-        bundle("ktor-client", listOf(
-            projects.ktorClient,
-            projects.ktorClientExtensionsJson,
-        ).map { it.name })
-
-        bundle("ktor-server", listOf(
-            projects.ktorServerOptions,
-            projects.ktorServerExtensionsDb,
-            projects.ktorServerExtensionsValidator,
-        ).map { it.name })
-    }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("catalog") {
-            artifactId = "${rootProject.name}-catalog"
-            from(components["versionCatalog"])
-        }
-    }
-}
+//mavenPublishing {
+//    configure(VersionCatalog())
+//}
