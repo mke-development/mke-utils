@@ -26,10 +26,16 @@ class ImageValidator(
     }
 
     fun checkWidth(compare: (w: Int) -> Boolean, errorMessage: () -> String) = also {
-        require(compare(imageData.width), errorMessage)
+        require(compare(imageData.width)) {
+            logger.debug("Image width: ${imageData.width}")
+            errorMessage()
+        }
     }
 
     fun checkHeight(compare: (h: Int) -> Boolean, errorMessage: () -> String) = also {
-        require(compare(imageData.height), errorMessage)
+        require(compare(imageData.height)) {
+            logger.debug("Image height: ${imageData.height}")
+            errorMessage()
+        }
     }
 }
