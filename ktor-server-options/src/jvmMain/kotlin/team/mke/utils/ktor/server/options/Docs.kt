@@ -1,12 +1,12 @@
 package team.mke.utils.ktor.server.options
 
-import io.github.smiley4.ktorswaggerui.dsl.routes.OpenApiResponses
-import io.github.smiley4.ktorswaggerui.dsl.routes.OpenApiRoute
+import io.github.smiley4.ktoropenapi.config.ResponsesConfig
+import io.github.smiley4.ktoropenapi.config.RouteConfig
 import io.ktor.http.HttpMethod
 import team.mke.utils.ktor.OptionValue
-import team.mke.utils.ktor.swagger.Method
-import team.mke.utils.ktor.swagger.OpenApiRouteBlock
-import team.mke.utils.ktor.swagger.ok
+import team.mke.utils.ktor.openapi.Method
+import team.mke.utils.ktor.openapi.OpenApiRouteBlock
+import team.mke.utils.ktor.openapi.ok
 
 abstract class OptionMethodImpl : Method {
     var generator: Pair<OpenApiRouteBlock, OpenApiRouteBlock>? = null
@@ -16,9 +16,9 @@ abstract class OptionMethodImpl : Method {
     var test: OpenApiRouteBlock? = null
 
     var tags = setOf(OptionTag)
-    var setupGet: OpenApiRoute.() -> Unit = {}
-    var setupPut: OpenApiRoute.() -> Unit = {}
-    var setupTest: OpenApiRoute.() -> Unit = {}
+    var setupGet: RouteConfig.() -> Unit = {}
+    var setupPut: RouteConfig.() -> Unit = {}
+    var setupTest: RouteConfig.() -> Unit = {}
 
     @JvmName("generateF")
     inline fun <reified T : Any> generate(
@@ -26,10 +26,10 @@ abstract class OptionMethodImpl : Method {
         responseExample: Pair<String, T>,
         requestExample: Pair<String, T>,
         summary: String? = null,
-        crossinline setupGet: OpenApiRoute.() -> Unit = { this@OptionMethodImpl.setupGet(this) },
-        crossinline setupPut: OpenApiRoute.() -> Unit = { this@OptionMethodImpl.setupPut(this) },
+        crossinline setupGet: RouteConfig.() -> Unit = { this@OptionMethodImpl.setupGet(this) },
+        crossinline setupPut: RouteConfig.() -> Unit = { this@OptionMethodImpl.setupPut(this) },
         tags: Set<String> = this.tags,
-        crossinline response: OpenApiResponses.(method: HttpMethod) -> Unit = {}
+        crossinline response: ResponsesConfig.(method: HttpMethod) -> Unit = {}
     ) {
         val Get: OpenApiRouteBlock = {
             description = "Возвращает $name"
@@ -79,9 +79,9 @@ abstract class OptionMethodImpl : Method {
     inline fun <reified T : Any> test(
         description: String,
         requestExample: Pair<String, T>,
-        crossinline setup: OpenApiRoute.() -> Unit = { this@OptionMethodImpl.setupTest(this) },
+        crossinline setup: RouteConfig.() -> Unit = { this@OptionMethodImpl.setupTest(this) },
         tags: Set<String> = this.tags,
-        crossinline response: OpenApiResponses.(method: HttpMethod) -> Unit = {}
+        crossinline response: ResponsesConfig.(method: HttpMethod) -> Unit = {}
     ) {
         test = {
             this.description = description

@@ -1,8 +1,8 @@
 package team.mke.utils.ktor.server.options
 
-import io.github.smiley4.ktorswaggerui.dsl.routes.OpenApiRoute
-import io.github.smiley4.ktorswaggerui.dsl.routing.get
-import io.github.smiley4.ktorswaggerui.dsl.routing.put
+import io.github.smiley4.ktoropenapi.config.RouteConfig
+import io.github.smiley4.ktoropenapi.get
+import io.github.smiley4.ktoropenapi.put
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -18,9 +18,9 @@ import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.ktor.ErrorDTO
 import team.mke.utils.ktor.OptionValue
 import team.mke.utils.ktor.server.options.OptionsRoutingContext.Companion.sets
-import team.mke.utils.ktor.swagger.OpenApiRouteBlock
-import team.mke.utils.ktor.swagger.notFound
-import team.mke.utils.ktor.swagger.ok
+import team.mke.utils.ktor.openapi.OpenApiRouteBlock
+import team.mke.utils.ktor.openapi.notFound
+import team.mke.utils.ktor.openapi.ok
 import team.mke.utils.safe
 
 class OptionsPluginConfiguration {
@@ -29,7 +29,7 @@ class OptionsPluginConfiguration {
     var crashInterceptor: CrashInterceptor<*>? = null
     var logger: Logger? = null
 
-    var getDocsSetup: OpenApiRoute.() -> Unit = {}
+    var getDocsSetup: RouteConfig.() -> Unit = {}
     var getDocs: OpenApiRouteBlock = {
         description = "Возвращает запрошенные настройки"
         tags(OptionTag)
@@ -59,7 +59,7 @@ class OptionsPluginConfiguration {
         getDocsSetup()
     }
 
-    var putDocsSetup: OpenApiRoute.() -> Unit = {}
+    var putDocsSetup: RouteConfig.() -> Unit = {}
     val putDocs: OpenApiRouteBlock = {
         description = buildString {
             append("Устанавливает настройки. Допускает только следующие списки:")

@@ -23,10 +23,10 @@ javax-mail = "1.6.2"
 reflections = "0.10.2"
 tika = "3.1.0"
 commonsImaging = "1.0.0-alpha5"
-ktor-swaggerUi = "4.1.0"
 kenerator = "1.6.3"
 publish = "0.32.0"
 dependency-analysis = "2.17.0"
+ktor-openapi-tools = "5.1.0"
 
 [libraries]
 # kotlin
@@ -51,6 +51,9 @@ ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
 ktor-io = { module = "io.ktor:ktor-io", version.ref = "ktor" }
 
 kenerator-core = { module = "io.github.smiley4:schema-kenerator-core", version.ref = "kenerator" }
+ktor-openapi-tools-openapi = { module = "io.github.smiley4:ktor-openapi", version.ref = "ktor-openapi-tools" }
+ktor-openapi-tools-swagger = { module = "io.github.smiley4:ktor-swagger-ui", version.ref = "ktor-openapi-tools" }
+ktor-openapi-tools-redoc = { module = "io.github.smiley4:ktor-redoc", version.ref = "ktor-openapi-tools" }
 
 # database
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
@@ -69,7 +72,6 @@ xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", v
 javax-mail = { module = "com.sun.mail:javax.mail", version.ref = "javax-mail" }
 markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
-ktor-swaggerUi = { module = "io.github.smiley4:ktor-swagger-ui", version.ref = "ktor-swaggerUi" }
 
 # apache
 log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }

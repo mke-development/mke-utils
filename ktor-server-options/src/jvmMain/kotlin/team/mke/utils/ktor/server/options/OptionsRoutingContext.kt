@@ -1,8 +1,8 @@
 package team.mke.utils.ktor.server.options
 
-import io.github.smiley4.ktorswaggerui.dsl.routing.get
-import io.github.smiley4.ktorswaggerui.dsl.routing.post
-import io.github.smiley4.ktorswaggerui.dsl.routing.put
+import io.github.smiley4.ktoropenapi.get
+import io.github.smiley4.ktoropenapi.post
+import io.github.smiley4.ktoropenapi.put
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.request.receiveText
@@ -23,8 +23,8 @@ import ru.raysmith.exposedoption.Option
 import ru.raysmith.utils.letIf
 import ru.raysmith.utils.wrap
 import team.mke.utils.ktor.OptionValue
-import team.mke.utils.ktor.swagger.Method
-import team.mke.utils.ktor.swagger.OpenApiRouteBlock
+import team.mke.utils.ktor.openapi.Method
+import team.mke.utils.ktor.openapi.OpenApiRouteBlock
 import kotlin.jvm.internal.MutablePropertyReference0
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.jvm.isAccessible

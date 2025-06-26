@@ -8,7 +8,7 @@ kotlin {
     sourceSets {
         jvmMain {
             dependencies {
-                api(libs.ktor.swaggerUi)
+                api(libs.ktor.openapi.tools.openapi)
                 implementation(libs.ktor.http)
             }
         }

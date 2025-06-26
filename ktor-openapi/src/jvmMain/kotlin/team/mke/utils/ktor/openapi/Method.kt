@@ -1,4 +1,4 @@
-package team.mke.utils.ktor.swagger
+package team.mke.utils.ktor.openapi
 
 @Suppress("PropertyName")
 interface Method {

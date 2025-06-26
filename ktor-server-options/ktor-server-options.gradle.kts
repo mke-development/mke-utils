@@ -17,7 +17,7 @@ kotlin {
             }
 
             dependencies {
-                api(projects.ktorSwagger)
+                api(projects.ktorOpenapi)
                 api(projects.crashInterceptor)
                 api(projects.json)
                 api(projects.common)
