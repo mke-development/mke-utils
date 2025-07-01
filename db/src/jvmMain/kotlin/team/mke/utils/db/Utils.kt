@@ -10,6 +10,8 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import ru.raysmith.utils.endOfWord
 import ru.raysmith.utils.letIf
 import team.mke.utils.db.sql.exists
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.format.DateTimeFormatter
 
 val dbDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -124,4 +126,73 @@ fun EntityClass<*, *>.any(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
 context(Transaction)
 fun EntityClass<*, *>.none(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
     return !exists(op)
+}
+
+context(Transaction)
+fun truncate(vararg tables: Table) = truncate(tables.toList())
+
+context(Transaction)
+fun truncate(tables: List<Table>) {
+    tables.forEach {
+        it.truncate()
+    }
+}
+
+context(Transaction)
+fun Table.truncate() {
+    exec("TRUNCATE TABLE $tableName")
+}
+
+val Column<BigDecimal>.scale get() = (columnType as DecimalColumnType).scale
+
+fun BigDecimal.scaledBy(
+    column: Column<BigDecimal>,
+    roundingMode: RoundingMode = RoundingMode.HALF_UP
+) = setScale(column.scale, roundingMode)
+
+fun <ID : Any, T : Entity<ID>> SizedIterable<T>.deleteAll() = forEach { it.delete() }
+
+fun <T> ColumnSet.getFromAliasOrColumn(col: Column<T>) = if (this is Alias<*>) this[col] else col
+
+context(Transaction, Entity<*>)
+@Suppress("USELESS_CAST", "UNCHECKED_CAST")
+fun <T> lookup(
+    alias: Alias<IdTable<*>>?,
+    col: Column<out T>, default: () -> T
+): T = alias?.getFromAliasOrColumn(col)?.lookup()
+    ?: writeValues[col as Column<out Any?>] as T
+    ?: readValues.getOrNull(col)
+    ?: default()
+
+inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrNull(id: ID): T? {
+    val entity = if (this is NotDeletableEntityClass<ID, *>) {
+        findById(id)?.letIf({ it.isDeleted() }) { null }
+    } else {
+        findById(id)
+    }
+
+    return entity
+}
+
+fun <ID : Any, T : IdTable<ID>> Alias<T>?.getOrColumn(col: Column<EntityID<ID>>) = this?.get(col) ?: col
+
+private fun defaultQuery(table: IdTable<*>): Op<Boolean> {
+    if (table is NotDeletableTable<*>) {
+        return table.validQueryExpression()
+    }
+    return Op.TRUE
+}
+
+context(EntityClass<ID, E>)
+fun <ID : Any, E : Entity<ID>> getAllImpl(
+    defaultQuery: Op<Boolean> = defaultQuery(table),
+    onQuery: Query.() -> Unit = { },
+    query: (SqlExpressionBuilder.() -> Op<Boolean>)? = null
+): SizedIterable<E> {
+    return table
+        .selectAll()
+        .where { defaultQuery.letIf(query != null) { it and query!!() } }
+        .orderBy(table.id to SortOrder.DESC)
+        .also { it.onQuery() }
+        .mapLazy { wrapRow(it) }
 }

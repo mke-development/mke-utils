@@ -12,6 +12,7 @@ kotlin {
 
                 api(libs.ktor.http)
                 implementation(libs.ktor.server.core)
+                implementation(libs.raysmith.utils)
             }
         }
     }

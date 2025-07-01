@@ -15,6 +15,7 @@ include("crashInterceptor")
 include("crashInterceptor-sentry")
 include("db")
 include("env")
+include("io")
 include("io-validator")
 include("server")
 include("ktor-openapi")
@@ -45,11 +46,12 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     versionCatalogs {
         create("kotlinWrappers") {
-            val wrappersVersion = "2025.3.10"
+            val wrappersVersion = "2025.6.0"
             from("org.jetbrains.kotlin-wrappers:kotlin-wrappers-catalog:$wrappersVersion")
         }
     }

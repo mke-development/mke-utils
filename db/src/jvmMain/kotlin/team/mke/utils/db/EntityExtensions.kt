@@ -7,6 +7,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.Alias
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Expression
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObject
@@ -67,4 +68,18 @@ inline fun <ID : Any, reified E : Entity<ID>, RID : Any, reified R : Entity<RID>
             ref.setValue(entity, property, value)
         }
     }
+}
+
+inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<ID>, T : IdTable<ID>> SOURCE.wrapRowFromAliasOrDefault(
+    alias: Alias<T>? = null, defaultValue: SOURCE.() -> REF
+): REF {
+    return if (alias != null) wrapRowOrDefault(alias) { defaultValue() }
+    else defaultValue()
+}
+
+inline fun <ID : Any, SOURCE : Entity<ID>, T> SOURCE.wrapValueFromAliasOrDefault(
+    alias: Expression<T>? = null, defaultValue: SOURCE.() -> T
+): T {
+    return if (alias != null) readValues.getOrNull(alias) ?: defaultValue()
+    else defaultValue()
 }

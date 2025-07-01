@@ -3,6 +3,7 @@ package team.mke.utils.ktor.ext.xml
 import io.ktor.http.*
 import io.ktor.server.plugins.MissingRequestParameterException
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.serialization.XML
 
 /**
@@ -19,3 +20,12 @@ inline fun <reified T, S : KSerializer<T>> Parameters.get(param: String, seriali
 inline fun <reified T, S : KSerializer<T>> Parameters.getOrFail(parameter: String, serializer: S): T {
     return get(parameter, serializer) ?: throw MissingRequestParameterException(parameter)
 }
+
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@JvmName("getAllXml")
+inline fun <reified T> Parameters.getAll(name: String, xml: XML = team.mke.utils.xml.xml) = getAll(name)
+    ?.map { arr ->
+        arr.split(",").map {
+            xml.decodeFromString<T>(it.trim())
+        }
+    }?.flatten()

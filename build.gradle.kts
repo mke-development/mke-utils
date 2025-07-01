@@ -60,7 +60,7 @@ subprojects {
 
     plugins.withId("com.vanniktech.maven.publish") {
         configure<MavenPublishBaseExtension> {
-            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = false)
+            publishToMavenCentral()
             signAllPublications()
             coordinates(group.toString(), "${rootProject.name}-${name}", version.toString())
 
@@ -123,34 +123,34 @@ dependencies {
     }
 }
 
-//catalog {
-//    versionCatalog {
-//        subprojects.forEach {
-//            library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
-//        }
-//
-//        bundle("ktor-client", listOf(
-//            projects.ktorClient,
-//            projects.ktorClientExtensionsJson,
-//        ).map { it.name })
-//
-//        bundle("ktor-server", listOf(
-//            projects.ktorServerOptions,
-//            projects.ktorServerExtensionsDb,
-//            projects.ktorServerExtensionsValidator,
-//        ).map { it.name })
-//    }
-//}
-//
-//publishing {
-//    publications {
-//        create<MavenPublication>("catalog") {
-//            artifactId = "${rootProject.name}-catalog"
-//            from(components["versionCatalog"])
-//        }
-//    }
-//}
+catalog {
+    versionCatalog {
+        subprojects.forEach {
+            library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
+        }
 
-//mavenPublishing {
-//    configure(VersionCatalog())
-//}
+        bundle("ktor-client", listOf(
+            projects.ktorClient,
+            projects.ktorClientExtensionsJson,
+        ).map { it.name })
+
+        bundle("ktor-server", listOf(
+            projects.ktorServerOptions,
+            projects.ktorServerExtensionsDb,
+            projects.ktorServerExtensionsValidator,
+        ).map { it.name })
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("catalog") {
+            artifactId = "${rootProject.name}-catalog"
+            from(components["versionCatalog"])
+        }
+    }
+}
+
+mavenPublishing {
+    configure(VersionCatalog())
+}

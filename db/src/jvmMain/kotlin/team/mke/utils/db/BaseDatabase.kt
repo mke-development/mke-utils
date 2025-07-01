@@ -19,11 +19,13 @@ import ru.raysmith.utils.outcome
 import ru.raysmith.utils.properties.PropertiesFactory
 import team.mke.utils.InitiableWithArgs
 import team.mke.utils.Versionable
+import team.mke.utils.db.eager.Prop
 import team.mke.utils.env.Environment
 import team.mke.utils.env.env
 import team.mke.utils.env.envRequired
 import java.time.ZoneId
 import java.util.*
+import kotlin.reflect.KClass
 import kotlin.reflect.full.hasAnnotation
 import kotlin.time.Duration.Companion.minutes
 
@@ -44,6 +46,12 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     companion object {
         const val NO_MIGRATION = -1
         val logger = LoggerFactory.getLogger("database")!!
+
+        private val eagerCollectorCache = Collections.synchronizedMap<KClass<*>, Array<Prop>>(mutableMapOf())
+        private var eagerCollectorCacheEnabled: Boolean = true
+
+        var eagerCollector: ((dtoClass: KClass<*>) -> Array<Prop>)? = null
+        internal set
     }
 
     private var properties: Properties? = null
@@ -212,5 +220,29 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         }
         return HikariDataSource(config)
     }
+
+    fun registerEagerlyCollector(cacheEnabled: Boolean = true, collector: Collector.(dtoClass: KClass<*>) -> Array<Prop>) {
+        eagerCollectorCacheEnabled = cacheEnabled
+        eagerCollector = c@ { dtoClass: KClass<*> ->
+            if (eagerCollectorCacheEnabled) {
+                val res = eagerCollectorCache[dtoClass]
+                if (res != null) {
+                    return@c res
+                }
+            }
+
+            object : Collector {
+                override fun collect(dtoClass: KClass<*>): Array<Prop> {
+                    return collector(dtoClass)
+                }
+            }.collect(dtoClass)
+
+        }
+    }
 }
 
+interface Collector {
+    fun collect(dtoClass: KClass<*>): Array<Prop>
+}
+
+inline fun <reified T> Collector.collect() = collect(T::class)

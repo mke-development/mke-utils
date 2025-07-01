@@ -1,7 +1,7 @@
 package team.mke.utils
 
 import js.objects.Object
-import js.objects.jso
+import js.objects.unsafeJso
 import react.Props
 
 /**
@@ -12,8 +12,8 @@ import react.Props
  * @return `other`
  * */
 fun Props.other(vararg prop: String): Props {
-    val res = jso<Props> {}
-    
+    val res = unsafeJso<Props> { }
+
     Object.keys(this)
         .filter { it !in prop }
         .forEach {

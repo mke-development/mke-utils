@@ -17,5 +17,10 @@ kotlin {
                 api(libs.raysmith.utils)
             }
         }
+        jvmTest {
+            dependencies {
+                implementation(libs.kotest)
+            }
+        }
     }
 }

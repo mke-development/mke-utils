@@ -7,6 +7,12 @@ kotlin {
     setupJvm()
 
     sourceSets {
+        commonMain {
+            dependencies {
+                implementation(projects.common)
+            }
+        }
+
         jvmMain {
             dependencies {
                 api(projects.crashInterceptor)
