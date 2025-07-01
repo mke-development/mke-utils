@@ -1,7 +1,6 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.VersionCatalog
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 
@@ -16,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "3.1.0"
+version = "3.1.1"
 
 allprojects {
     apply(plugin = "org.jetbrains.kotlinx.kover")

@@ -12,7 +12,8 @@ import team.mke.utils.ext.defaultExportPhonesFormats
 import team.mke.utils.ext.exportPhones
 
 @OptIn(ExperimentalSerializationApi::class)
-open class PhoneSerializer(vararg formats: PhoneFormat = defaultExportPhonesFormats) : KSerializer<String?> {
+open class PhoneSerializer(val formats: Array<PhoneFormat> = defaultExportPhonesFormats) : KSerializer<String?> {
+
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Phone", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: String?) {
@@ -25,7 +26,7 @@ open class PhoneSerializer(vararg formats: PhoneFormat = defaultExportPhonesForm
     }
 
     override fun deserialize(decoder: Decoder): String? {
-        return decoder.decodeString().exportPhones().firstOrNull()
+        return decoder.decodeString().exportPhones(*formats).firstOrNull()
     }
 }
 
