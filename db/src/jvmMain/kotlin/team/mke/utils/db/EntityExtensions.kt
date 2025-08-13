@@ -2,7 +2,6 @@ package team.mke.utils.db
 
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.exceptions.EntityNotFoundException
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.Alias
@@ -12,18 +11,13 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.full.findAnnotation
 
-/** Return this entity or throw [EntityNotFoundException] if entity is null */
+/** Return this entity or throw [EntityNotFoundException] with [message] if entity is null */
 @Suppress("UNCHECKED_CAST")
-inline fun <ID : Any, reified T : Entity<ID>> T?.orThrow(id: ID) = this ?: run {
+inline fun <ID : Any, reified T : Entity<ID>> T?.orThrow(id: ID? = null, message: String? = null) = this ?: run {
     val entityClass = T::class.companionObject?.objectInstance as EntityClass<ID, *>
-    throw EntityNotFoundException(EntityID(id, entityClass.table), entityClass)
-}
-
-/** Return this entity or throw [EntityNotFoundExceptionByColumn] if entity is null */
-inline fun <V : Any?, reified T : Entity<*>> T?.orThrowBy(value: V, column: Column<*>) = this ?: run {
-    val entityClass = T::class.companionObject?.objectInstance as EntityClass<*, *>
-    throw EntityNotFoundExceptionByColumn(value, column, entityClass)
+    throw EntityNotFoundException(entityClass, id?.let { EntityID(it, entityClass.table) }, message)
 }
 
 inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<ID>> SOURCE.wrapRowOrDefault(
@@ -83,3 +77,20 @@ inline fun <ID : Any, SOURCE : Entity<ID>, T> SOURCE.wrapValueFromAliasOrDefault
     return if (alias != null) readValues.getOrNull(alias) ?: defaultValue()
     else defaultValue()
 }
+
+fun EntityClass<*, *>.entityName(): String? {
+    val kClass = (javaClass.enclosingClass as Class<*>).kotlin
+    return kClass.findAnnotation<EntityName>()?.name ?: kClass.simpleName
+}
+
+/** не найдена или больше не доступна */
+const val entityNotFoundPostfixF = "не найдена или больше не доступна"
+
+/** не найден или больше не доступен */
+const val entityNotFoundPostfixM = "не найден или больше не доступен"
+
+/** не найдено или больше не доступно */
+const val entityNotFoundPostfixN = "не найдено или больше не доступно"
+
+/** не найдены или больше не доступны */
+const val entityNotFoundPostfixMultiple = "не найдены или больше не доступны"

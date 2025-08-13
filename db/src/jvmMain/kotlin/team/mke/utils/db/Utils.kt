@@ -63,20 +63,20 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
 }
 
 /**
- * Gets an [Entity] by its [id] value or throw [EntityNotFoundException] if entity does not exist.
+ * Gets an [Entity] by its [id] value or throw [EntityNotFoundException] with [message] if entity does not exist.
  * If entity's table is [NotDeletableTable], then the entity will be not deleted.
  *
  * @param id The id value of the entity.
  * @return The entity that has this id value, or `null` if no entity was found.
  */
-inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID): T {
+inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID, message: String? = null): T {
     val entity = if (this is NotDeletableEntityClass<ID, *>) {
         findById(id)?.letIf({ it.isDeleted() }) { null }
     } else {
         findById(id)
     }
 
-    return entity.orThrow(id)
+    return entity.orThrow(id, message)
 }
 
 @JvmName("requireLengthNullable")
