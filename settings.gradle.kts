@@ -25,6 +25,7 @@ include("ktor-extensions-xml")
 include("ktor-client")
 include("ktor-client-extensions-json")
 include("ktor-server-options")
+include("ktor-server-extensions")
 include("ktor-server-extensions-validator")
 include("ktor-server-extensions-db")
 include("logging")
@@ -35,6 +36,9 @@ include("unmd")
 include("json")
 include("xml")
 include("catalog")
+include("model")
+include("model-json")
+include("test-db")
 
 rootProject.children.forEach {
     it.buildFileName = it.name + ".gradle.kts"

@@ -8,10 +8,6 @@ import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.reflections.Reflections
-import org.reflections.scanners.Scanners
-import org.reflections.util.ClasspathHelper
-import org.reflections.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.ms
@@ -26,9 +22,9 @@ import team.mke.utils.env.envRequired
 import java.time.ZoneId
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.full.hasAnnotation
 import kotlin.time.Duration.Companion.minutes
 
+@Deprecated("Use utf8mb4_unicode_520_ci instead", ReplaceWith("Collation.utf8mb4_unicode_520_ci"))
 const val COLLATE_UTF8MB4_UNICODE_CI = "utf8mb4_unicode_ci"
 
 // TODO readme
@@ -57,18 +53,9 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     private var properties: Properties? = null
     val timeZone by lazy { ZoneId.of(properties?.get("serverTimezone")?.toString() ?: "UTC") }
 
-    private val isTest = dbHost.contains(":h2")
+    private val isTest = dbHost.contains(":h2") // TODO better way to detect test environment
     open val tables: List<Table> by lazy {
-        val packageName = this::class.java.packageName
-        val configuration = ConfigurationBuilder()
-            .setUrls(ClasspathHelper.forPackage(packageName))
-            .setScanners(Scanners.SubTypes.filterResultsBy { true })
-
-        Reflections(configuration)
-            .getSubTypesOf(Table::class.java)
-            .filter { it.packageName.startsWith(packageName) }
-            .mapNotNull { it.kotlin.objectInstance }
-            .filter { !it::class.hasAnnotation<TransientTable>() }
+        collectAllTables(this::class.java.packageName)
     }
 
     val connection: Database get() = _connection ?: error("Can't provide connection before call Database.connect()")

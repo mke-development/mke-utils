@@ -82,8 +82,12 @@ apache-commons-imaging = { module = "org.apache.commons:commons-imaging", versio
 kotest = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest-extensions-htmlreporter = { module = "io.kotest:kotest-extensions-htmlreporter", version.ref = "kotest" }
+kotest-extensions-junitxml = { module = "io.kotest:kotest-extensions-junitxml", version.ref = "kotest" }
+kotest-html-reporter = { module = "com.michaelstrasser:kotest-html-reporter", version = "0.8.0" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+h2 = { module = "com.h2database:h2", version = "2.3.232" }
 
 # gradle
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
