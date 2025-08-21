@@ -1,6 +1,11 @@
 package team.mke.utils.db.sql
 
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.v1.core.CaseWhen
+import org.jetbrains.exposed.v1.core.ComplexExpression
+import org.jetbrains.exposed.v1.core.ExpressionWithColumnType
+import org.jetbrains.exposed.v1.core.IColumnType
+import org.jetbrains.exposed.v1.core.QueryBuilder
+import org.jetbrains.exposed.v1.core.append
 
 class CaseWhenEnd<T>(
     /** The conditions to check and their results if met. */

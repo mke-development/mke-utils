@@ -1,12 +1,12 @@
 package team.mke.utils.db
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.exposed.sql.IColumnType
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.statements.StatementType
+import org.jetbrains.exposed.v1.core.IColumnType
+import org.jetbrains.exposed.v1.core.statements.StatementType
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import java.sql.ResultSet
 
-fun Transaction.execSelect(
+fun JdbcTransaction.execSelect(
     @Language("sql") stmt: String,
     args: Iterable<Pair<IColumnType<*>, Any?>> = emptyList(),
     explicitStatementType: StatementType? = null,
@@ -15,7 +15,7 @@ fun Transaction.execSelect(
     it.forEach(block)
 }
 
-fun <R> Transaction.execSelectMap(
+fun <R> JdbcTransaction.execSelectMap(
     @Language("sql") stmt: String,
     args: Iterable<Pair<IColumnType<*>, Any?>> = emptyList(),
     explicitStatementType: StatementType? = null,

@@ -2,24 +2,37 @@ package team.mke.utils.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.jetbrains.exposed.dao.flushCache
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.statements.StatementContext
-import org.jetbrains.exposed.sql.statements.expandArgs
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.DatabaseConfig
+import org.jetbrains.exposed.v1.core.ExperimentalDatabaseMigrationApi
+import org.jetbrains.exposed.v1.core.SqlLogger
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.Transaction
+import org.jetbrains.exposed.v1.core.exposedLogger
+import org.jetbrains.exposed.v1.core.statements.StatementContext
+import org.jetbrains.exposed.v1.core.statements.expandArgs
+import org.jetbrains.exposed.v1.dao.flushCache
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.migration.MigrationUtils
 import org.slf4j.LoggerFactory
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.ms
+import ru.raysmith.utils.nowZoned
 import ru.raysmith.utils.outcome
 import ru.raysmith.utils.properties.PropertiesFactory
+import ru.raysmith.utils.today
 import team.mke.utils.InitiableWithArgs
 import team.mke.utils.Versionable
+import team.mke.utils.dateTimeFormat
 import team.mke.utils.db.eager.Prop
 import team.mke.utils.env.Environment
 import team.mke.utils.env.env
 import team.mke.utils.env.envRequired
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
@@ -39,6 +52,10 @@ private val dbSchema by env("DB_SCHEMA", "jdbc:mysql")
 // TODO docs; example
 @Suppress("SqlNoDataSourceInspection")
 abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
+
+    open val withLogs: Boolean = false
+    open val createMigrationsFiles: Boolean = false
+
     companion object {
         const val NO_MIGRATION = -1
         val logger = LoggerFactory.getLogger("database")!!
@@ -61,7 +78,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     val connection: Database get() = _connection ?: error("Can't provide connection before call Database.connect()")
     private var _connection: Database? = null
 
-    context(Transaction)
+    context(JdbcTransaction)
     abstract fun migration(connection: Database, toVersion: Int)
 
     override fun init() {
@@ -115,15 +132,37 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     open fun onConnection(isTest: Boolean) {}
     open fun beforeCreateTables() {}
 
+    @OptIn(ExperimentalDatabaseMigrationApi::class)
     fun createMissingTablesAndColumns(vararg tables: Table = this.tables.toTypedArray()) {
-        SchemaUtils.createMissingTablesAndColumns(*tables, withLogs = false)
+        SchemaUtils.create(*tables)
+
+        if (createMigrationsFiles) {
+            MigrationUtils.generateMigrationScript(
+                *tables,
+                scriptDirectory = "db-migrations",
+                scriptName = nowZoned().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")),
+                withLogs = withLogs
+            ).also {
+                transaction {
+                    exec(it.readText())
+                }
+            }
+        } else {
+            MigrationUtils.statementsRequiredForDatabaseMigration(*tables, withLogs = withLogs).apply {
+                if (isNotEmpty()) {
+                    transaction {
+                        forEach { exec(it) }
+                    }
+                }
+            }
+        }
     }
     fun addMissingColumnsStatements(vararg tables: Table = this.tables.toTypedArray()): List<String> {
-        return SchemaUtils.addMissingColumnsStatements(*tables, withLogs = false)
+        return SchemaUtils.addMissingColumnsStatements(*tables, withLogs = withLogs)
     }
 
     protected fun initConnection(dbProperties: String? = "db.properties"): Database {
-        Database.connect(hikari(dbProperties, useDatabase = false)).also {
+        Database.connect(hikari(dbProperties, useDatabase = withLogs)).also {
             transaction {
                 SchemaUtils.createDatabase(dbName)
             }
@@ -139,13 +178,6 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
 
         return Database.connect(hikari(dbProperties), databaseConfig = config).also {
             transaction(it) {
-                val loggerInterceptor = addLogger(object : SqlLogger {
-                    override fun log(context: StatementContext, transaction: Transaction) {
-                        if (logger.isDebugEnabled) {
-                            logger.debug(context.expandArgs(TransactionManager.current()))
-                        }
-                    }
-                })
                 beforeCreateTables()
                 SchemaUtils.create(Options)
 
@@ -157,20 +189,17 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
                 }!!
 
                 while(databaseVersion < version && version != NO_MIGRATION) {
-                    exposedLogger.info("Start migration from $databaseVersion to ${databaseVersion + 1}...")
+                    logger.info("Start migration from $databaseVersion to ${databaseVersion + 1}...")
                     transaction {
                         migration(it, databaseVersion + 1)
                         exec("UPDATE `options` SET `value` = '${++databaseVersion}' WHERE `key` = 'VERSION'")
                     }
                 }
 
-                unregisterInterceptor(loggerInterceptor)
-
                 createMissingTablesAndColumns()
                 addMissingColumnsStatements()
-                SchemaUtils.checkExcessiveIndices(*tables.toTypedArray(), withLogs = true)
-                SchemaUtils.checkExcessiveForeignKeyConstraints(*tables.toTypedArray(), withLogs = true)
-                registerInterceptor(loggerInterceptor)
+                SchemaUtils.checkExcessiveIndices(*tables.toTypedArray(), withLogs = withLogs)
+                SchemaUtils.checkExcessiveForeignKeyConstraints(*tables.toTypedArray(), withLogs = withLogs)
             }
         }
     }
@@ -198,7 +227,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
             password = dbPass
             validationTimeout = 1.minutes.ms
 
-            PropertiesFactory.from("hikari.properties").forEach { key, value ->
+            PropertiesFactory.from("hikari.properties").forEach { (key, value) ->
                 addDataSourceProperty(key as String, value)
             }
 

@@ -1,12 +1,12 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.dao.Entity
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.exceptions.EntityNotFoundException
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.dao.Entity
+import org.jetbrains.exposed.v1.dao.EntityClass
+import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import ru.raysmith.utils.endOfWord
 import ru.raysmith.utils.letIf
 import team.mke.utils.db.sql.exists
@@ -105,7 +105,7 @@ fun requireLength(length: Long, string: String, error: (symbols: String) -> Stri
     }
 }
 
-context(Transaction)
+context(JdbcTransaction)
 fun <T> ignoreReferentialIntegrity(transaction: () -> T): T {
     exec("SET REFERENTIAL_INTEGRITY FALSE")
     val res = transaction()
@@ -128,17 +128,17 @@ fun EntityClass<*, *>.none(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean 
     return !exists(op)
 }
 
-context(Transaction)
+context(JdbcTransaction)
 fun truncate(vararg tables: Table) = truncate(tables.toList())
 
-context(Transaction)
+context(JdbcTransaction)
 fun truncate(tables: List<Table>) {
     tables.forEach {
         it.truncate()
     }
 }
 
-context(Transaction)
+context(JdbcTransaction)
 fun Table.truncate() {
     exec("TRUNCATE TABLE $tableName")
 }

@@ -1,7 +1,7 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.Table
 import team.mke.utils.defaultTimeZone
 import java.math.RoundingMode
 import java.time.LocalDateTime

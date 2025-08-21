@@ -1,6 +1,6 @@
 package team.mke.utils.db.eager
 
-import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.v1.dao.Entity
 import kotlin.reflect.KProperty1
 
 typealias Prop = KProperty1<out Entity<*>, Any?>

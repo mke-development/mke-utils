@@ -18,10 +18,11 @@ kotlin {
                 api(libs.exposed.core)
                 api(libs.exposed.dao)
                 api(libs.exposed.java.time)
+                api(libs.exposed.jdbc)
+                api(libs.exposed.migration)
                 api(libs.hikari)
 
                 api(libs.raysmith.exposedOption)
-//                implementation(libs.kotlinx.serialization.core)
                 implementation(libs.reflections)
                 implementation(libs.raysmith.utils)
             }

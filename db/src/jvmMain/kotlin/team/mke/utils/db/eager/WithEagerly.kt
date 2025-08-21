@@ -1,8 +1,8 @@
 package team.mke.utils.db.eager
 
-import org.jetbrains.exposed.dao.Entity
-import org.jetbrains.exposed.dao.with
-import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.v1.core.Transaction
+import org.jetbrains.exposed.v1.dao.Entity
+import org.jetbrains.exposed.v1.dao.with
 import team.mke.utils.db.BaseDatabase
 import kotlin.reflect.KClass
 

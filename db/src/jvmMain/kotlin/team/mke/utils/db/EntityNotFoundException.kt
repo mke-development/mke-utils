@@ -1,7 +1,8 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.EntityClass
+
 
 class EntityNotFoundException private constructor(
     override val message: String? = null

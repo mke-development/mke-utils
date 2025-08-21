@@ -1,12 +1,12 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.dao.Entity
-import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.Alias
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.v1.core.Alias
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.Expression
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.dao.Entity
+import org.jetbrains.exposed.v1.dao.EntityClass
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObject
