@@ -4,7 +4,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import team.mke.utils.ktor.OptionValue
+import team.mke.utils.model.OptionValue
 import kotlin.reflect.KMutableProperty
 
 @Suppress("UNCHECKED_CAST")

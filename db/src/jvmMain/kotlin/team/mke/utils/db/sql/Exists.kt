@@ -6,11 +6,11 @@ import org.jetbrains.exposed.v1.jdbc.Query
 import org.jetbrains.exposed.v1.jdbc.select
 
 
-fun Table.exist(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
+fun Table.exist(op: () -> Op<Boolean>): Boolean {
     val exists = exists(select(intLiteral(1)).where(op))
     return Query(Select(Table.Dual, listOf(exists)), null).first()[exists]
 }
 
-fun EntityClass<*, *>.exists(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
+fun EntityClass<*, *>.exists(op: () -> Op<Boolean>): Boolean {
     return table.exist(op)
 }

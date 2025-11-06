@@ -1,8 +1,9 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import com.vanniktech.maven.publish.VersionCatalog
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.VersionCatalog
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     kotlin("multiplatform") apply false
@@ -38,6 +39,12 @@ allprojects {
                     org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
                 )
                 exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            }
+        }
+
+        withType<KotlinJvmCompile> {
+            compilerOptions {
+                freeCompilerArgs.add("-Xallow-holdsin-contract")
             }
         }
     }

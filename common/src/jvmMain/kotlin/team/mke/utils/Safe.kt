@@ -10,7 +10,13 @@ import kotlin.contracts.contract
 import kotlin.coroutines.cancellation.CancellationException
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> safe(crashInterceptor: CrashInterceptor<*>, logger: Logger, vararg tags: ErrorTag, block: () -> T): T? {
+inline fun <T> safe(
+    crashInterceptor: CrashInterceptor<*>,
+    logger: Logger,
+    tags: () -> Array<ErrorTag> = { arrayOf() },
+    printStacktrace: Boolean = true,
+    block: () -> T
+): T? {
     contract {
         callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
@@ -20,7 +26,7 @@ inline fun <T> safe(crashInterceptor: CrashInterceptor<*>, logger: Logger, varar
     } catch (_: CancellationException) {
         null
     } catch (e: Exception) {
-        crashInterceptor.intercept(e, logger, null, *tags(e, *tags))
+        crashInterceptor.intercept(e, logger, null, printStacktrace, *tags(e, *tags()))
         null
     }
 }

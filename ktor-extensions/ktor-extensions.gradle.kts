@@ -1,14 +1,12 @@
 plugins {
-    kotlin("multiplatform")
+    `convention-kmp`
 }
 
 kotlin {
-    setupJvm()
-
     sourceSets {
         commonMain {
             dependencies {
-                api(projects.server)
+                api(projects.model)
             }
         }
         jvmMain {

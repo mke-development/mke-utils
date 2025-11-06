@@ -3,19 +3,41 @@ package team.mke.utils.ktor.ext.json
 import io.ktor.http.Parameters
 import io.ktor.http.content.PartData
 import io.ktor.server.plugins.MissingRequestParameterException
+import kotlinx.serialization.ContextualSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.serializer
 import ru.raysmith.utils.forEachLet
+import kotlin.reflect.full.isSubclassOf
 
 /**
  * Return deserialized an HTTP parameter or null if the parameter is not contained
  * @param param request parameter
+ * @param json Json instance to use for deserialization
  * */
-inline fun <reified T, S : KSerializer<T>> Parameters.get(param: String, serializer: S, json: Json = team.mke.utils.json.json): T? {
-    return get(param)?.let { if (it.isEmpty()) null else json.decodeFromString(serializer, "\"$it\"") }
+inline fun <reified T, S : KSerializer<T>> Parameters.get(
+    param: String,
+    serializer: S,
+    json: Json = team.mke.utils.json.json,
+    parseAsString: Boolean = T::class.isSubclassOf(CharSequence::class)
+): T? {
+    return get(param)?.let { if (it.isEmpty()) null else json.decodeFromString(serializer, if (parseAsString) "\"$it\"" else it) }
+}
+
+/**
+ * Return deserialized an HTTP parameter or null if the parameter is not contained
+ * @param param request parameter
+ * @param json Json instance to use for deserialization
+ * */
+inline fun <reified T> Parameters.get(
+    param: String,
+    json: Json = team.mke.utils.json.json,
+    parseAsString: Boolean = T::class.isSubclassOf(CharSequence::class)
+): T? {
+    return get(param)?.let { if (it.isEmpty()) null else json.decodeFromString(if (parseAsString) "\"$it\"" else it) }
 }
 
 /**

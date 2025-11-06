@@ -15,12 +15,12 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.slf4j.Logger
 import ru.raysmith.utils.letIf
 import team.mke.utils.crashinterceptor.CrashInterceptor
-import team.mke.utils.ktor.ErrorDTO
-import team.mke.utils.ktor.OptionValue
 import team.mke.utils.ktor.server.options.OptionsRoutingContext.Companion.sets
 import team.mke.utils.ktor.openapi.OpenApiRouteBlock
 import team.mke.utils.ktor.openapi.notFound
 import team.mke.utils.ktor.openapi.ok
+import team.mke.utils.model.ErrorDTO
+import team.mke.utils.model.OptionValue
 import team.mke.utils.safe
 
 class OptionsPluginConfiguration {

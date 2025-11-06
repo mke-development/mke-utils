@@ -4,33 +4,28 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.v1.core.DatabaseConfig
 import org.jetbrains.exposed.v1.core.ExperimentalDatabaseMigrationApi
-import org.jetbrains.exposed.v1.core.SqlLogger
 import org.jetbrains.exposed.v1.core.Table
-import org.jetbrains.exposed.v1.core.Transaction
-import org.jetbrains.exposed.v1.core.exposedLogger
-import org.jetbrains.exposed.v1.core.statements.StatementContext
-import org.jetbrains.exposed.v1.core.statements.expandArgs
+import org.jetbrains.exposed.v1.dao.EntityClass
 import org.jetbrains.exposed.v1.dao.flushCache
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.migration.MigrationUtils
+import org.jetbrains.exposed.v1.migration.jdbc.MigrationUtils
 import org.slf4j.LoggerFactory
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.ms
 import ru.raysmith.utils.nowZoned
 import ru.raysmith.utils.outcome
 import ru.raysmith.utils.properties.PropertiesFactory
-import ru.raysmith.utils.today
 import team.mke.utils.InitiableWithArgs
 import team.mke.utils.Versionable
-import team.mke.utils.dateTimeFormat
 import team.mke.utils.db.eager.Prop
 import team.mke.utils.env.Environment
 import team.mke.utils.env.env
 import team.mke.utils.env.envRequired
+import java.io.File
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -137,6 +132,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         SchemaUtils.create(*tables)
 
         if (createMigrationsFiles) {
+            File("db-migrations").mkdirs()
             MigrationUtils.generateMigrationScript(
                 *tables,
                 scriptDirectory = "db-migrations",
@@ -237,7 +233,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         return HikariDataSource(config)
     }
 
-    fun registerEagerlyCollector(cacheEnabled: Boolean = true, collector: Collector.(dtoClass: KClass<*>) -> Array<Prop>) {
+    fun registerEagerlyCollector(cacheEnabled: Boolean = true, collector: Collector.(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?) -> Array<Prop>) {
         eagerCollectorCacheEnabled = cacheEnabled
         eagerCollector = c@ { dtoClass: KClass<*> ->
             if (eagerCollectorCacheEnabled) {
@@ -248,8 +244,8 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
             }
 
             object : Collector {
-                override fun collect(dtoClass: KClass<*>): Array<Prop> {
-                    return collector(dtoClass)
+                override fun collect(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?): Array<Prop> {
+                    return collector(dtoClass, entityClass)
                 }
             }.collect(dtoClass)
 
@@ -258,7 +254,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
 }
 
 interface Collector {
-    fun collect(dtoClass: KClass<*>): Array<Prop>
+    fun collect(dtoClass: KClass<*>, entityClass: EntityClass<*, *>? = null): Array<Prop>
 }
 
-inline fun <reified T> Collector.collect() = collect(T::class)
+inline fun <reified T> Collector.collect(entityClass: EntityClass<*, *>? = null) = collect(T::class, entityClass)

@@ -38,7 +38,29 @@ sealed class OptionalField<out T> {
         return this is Present
     }
 
-    fun or(default: () -> @UnsafeVariance T): T = when (this) {
+    @OptIn(ExperimentalContracts::class)
+    inline fun <R> ifPresentOrNull(block: ((T) -> R)): R? {
+        contract {
+            returns(true) implies (this@OptionalField is Present<T>)
+        }
+
+        return if (this is Present) {
+            block(value)
+        } else null
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    inline fun <R> ifPresentAndOrNull(predicate: (T) -> Boolean = { true }, block: (T) -> R): R? {
+        contract {
+            returns(true) implies (this@OptionalField is Present<T>)
+        }
+
+        return if (this is Present && predicate(value)) {
+            block(value)
+        } else null
+    }
+
+    inline fun or(default: () -> @UnsafeVariance T): T = when (this) {
         is Present -> value
         NotPresent -> default()
     }
@@ -48,13 +70,13 @@ sealed class OptionalField<out T> {
         NotPresent -> null
     }
 
-    fun orThrow(error: () -> Nothing = { error("Value is not present") }): T = when (this) {
+    inline fun orThrow(error: () -> Nothing = { error("Value is not present") }): T = when (this) {
         is Present -> value
         NotPresent -> error()
     }
 
     @OptIn(ExperimentalContracts::class)
-    inline fun isPresentAndNotNull(predicate: (T?) -> Boolean = { true }, block: (T) -> Unit) {
+    inline fun isPresentAndNotNull(predicate: (T) -> Boolean = { true }, block: (T) -> Unit) {
         contract {
             returns(true) implies (this@OptionalField is Present<T>)
             callsInPlace(block, InvocationKind.AT_MOST_ONCE)

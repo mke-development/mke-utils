@@ -1,28 +1,14 @@
 plugins {
-    kotlin("multiplatform")
+    `convention-kmp-js`
 }
 
 kotlin {
-    setupJvm()
-
-    js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                    useFirefox()
-                }
-            }
-        }
-        nodejs()
-        binaries.executable()
-    }
-
     sourceSets {
         commonTest {
             dependencies {
-                implementation(libs.kotest.framework.engine)
-                implementation(libs.kotest.assertions.core)
+                implementation(kotlin("test"))
+//                implementation(libs.kotest.framework.engine)
+//                implementation(libs.kotest.assertions.core)
             }
         }
 
@@ -34,12 +20,6 @@ kotlin {
 
                 api(libs.slf4j.api)
                 implementation(libs.kotlin.reflect)
-            }
-        }
-
-        jvmTest {
-            dependencies {
-                implementation(libs.kotest)
             }
         }
 

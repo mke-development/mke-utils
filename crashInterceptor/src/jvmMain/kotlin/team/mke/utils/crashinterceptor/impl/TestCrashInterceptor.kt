@@ -43,14 +43,20 @@ object TestCrashInterceptor : CrashInterceptor<CrashInterceptorConfigImpl> {
         lastTags = null
     }
 
-    override fun intercept(e: Throwable, logger: Logger, message: String?, tags: Map<String, Any?>?) {
+    override fun intercept(e: Throwable, logger: Logger, message: String?, printStackTrace: Boolean, tags: Map<String, Any?>?) {
         lastThrowable = e
         lastLogger = logger
         lastMessage = message
         lastTags = tags
         totalIntercepted++
         totalEntries++
-        logger.error("[test] $message ${tags ?:  ""}".trim(), e)
+
+        val message = "[test] $message ${tags ?:  ""}".trim()
+        if (printStackTrace) {
+            logger.error(message, e)
+        } else {
+            logger.error(message)
+        }
     }
 
     override fun message(message: String, logger: Logger, tags: Map<String, Any?>?) {

@@ -3,10 +3,10 @@ package team.mke.utils.ktor.server.options
 import io.github.smiley4.ktoropenapi.config.ResponsesConfig
 import io.github.smiley4.ktoropenapi.config.RouteConfig
 import io.ktor.http.HttpMethod
-import team.mke.utils.ktor.OptionValue
 import team.mke.utils.ktor.openapi.Method
 import team.mke.utils.ktor.openapi.OpenApiRouteBlock
 import team.mke.utils.ktor.openapi.ok
+import team.mke.utils.model.OptionValue
 
 abstract class OptionMethodImpl : Method {
     var generator: Pair<OpenApiRouteBlock, OpenApiRouteBlock>? = null

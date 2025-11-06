@@ -73,7 +73,7 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
         }
     }
 
-    override fun intercept(e: Throwable, logger: Logger, message: String?, tags: Map<String, Any?>?) {
+    override fun intercept(e: Throwable, logger: Logger, message: String?, printStackTrace: Boolean, tags: Map<String, Any?>?) {
         fun IScope.setup() {
             clear()
             tags?.forEach { (k, v) ->
@@ -82,7 +82,12 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
 
             val logId = UUID.randomUUID().toString()
             setTag("log_id", logId)
-            logger.error("[$logId] ${message ?: e.message} (${tags ?: "[]"})", e)
+            val message = "[$logId] ${message ?: e.message} (${tags ?: "[]"})"
+            if (printStackTrace) {
+                logger.error(message, e)
+            } else {
+                logger.error(message)
+            }
         }
 
         if (message != null) {

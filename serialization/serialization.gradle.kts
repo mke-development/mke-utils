@@ -1,11 +1,9 @@
 plugins {
-    kotlin("multiplatform")
+    `convention-kmp`
     alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
-    setupJvm()
-
     sourceSets {
         commonMain {
             dependencies {

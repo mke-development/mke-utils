@@ -1,11 +1,9 @@
 plugins {
-    kotlin("multiplatform")
+    `convention-kmp`
     alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
-    setupJvm()
-
     sourceSets {
         commonMain {
             dependencies {
@@ -17,7 +15,6 @@ kotlin {
             dependencies {
                 api(libs.ktor.http)
                 implementation(libs.raysmith.utils)
-
             }
         }
     }

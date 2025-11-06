@@ -1,6 +1,6 @@
-package team.mke.utils.ktor
+package team.mke.utils.model
 
-import io.github.smiley4.schemakenerator.core.annotations.Description
+import jdk.jfr.Description
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 

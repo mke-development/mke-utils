@@ -1,24 +1,20 @@
 package team.mke.utils.ktor.ext
 
 import io.ktor.http.*
-import io.ktor.http.content.PartData
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.RoutingCall
+import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.ktor.util.converters.*
 import io.ktor.util.pipeline.*
 import io.ktor.util.reflect.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import ru.raysmith.utils.nowZoned
 import ru.raysmith.utils.uuid
-import team.mke.utils.ktor.ErrorDTO
+import team.mke.utils.model.ErrorDTO
 import java.io.File
-import java.net.Inet4Address
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -66,8 +62,10 @@ suspend fun ApplicationCall.forbidden(
 
 val PipelineContext<*, ApplicationCall>.logger get() = call.application.log
 
-val RoutingCall.ip get() = runBlocking {
-    withContext(Dispatchers.IO) { Inet4Address.getByName(request.origin.remoteAddress).hostAddress }
+val RoutingCall.ip: String get() {
+    return request.headers["X-Forwarded-For"]?.split(",")?.first()?.trim()
+        ?: request.headers["X-Real-IP"]
+        ?: request.origin.remoteHost
 }
 
 fun notFound(message: String?): Nothing = throw NotFoundException(message)
@@ -91,4 +89,30 @@ fun PartData.FileItem.prepareFile(parentPath: String): File {
     }
 
     return file
+}
+
+/**
+ * Generates a `File` object for a given `PartData.FileItem` and writes the provided byte array to it.
+ * If a file with the original name already exists, a unique identifier is appended to the name.
+ *
+ * @param parentPath The parent directory path where the file should be located.
+ * @param bytes The byte array to write to the file.
+ * @return A `File` object representing the file with a unique name if necessary.
+ */
+fun PartData.FileItem.prepareFileAndWrite(parentPath: String, bytes: ByteArray): File = prepareFile(parentPath).apply {
+    parentFile.mkdirs()
+    writeBytes(bytes)
+}
+
+fun RoutingResponse.contentDispositionHeader(filename: String) {
+    val parameter = if (filename.any { it.code > 127 }) {
+        ContentDisposition.Parameters.FileNameAsterisk
+    } else {
+        ContentDisposition.Parameters.FileName
+    }
+
+    header(
+        HttpHeaders.ContentDisposition,
+        ContentDisposition.Attachment.withParameter(parameter, filename).toString()
+    )
 }

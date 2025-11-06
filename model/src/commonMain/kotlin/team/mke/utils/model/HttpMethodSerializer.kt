@@ -1,4 +1,4 @@
-package team.mke.utils.ktor
+package team.mke.utils.model
 
 import io.ktor.http.HttpMethod
 import kotlinx.serialization.KSerializer

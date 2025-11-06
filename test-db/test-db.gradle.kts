@@ -1,16 +1,10 @@
 plugins {
-    kotlin("multiplatform")
+    `convention-kmp`
 }
 
 kotlin {
-    setupJvm()
-
     sourceSets {
         jvmMain {
-            languageSettings {
-                enableLanguageFeature("ContextReceivers")
-                enableLanguageFeature("WhenGuards")
-            }
             dependencies {
                 implementation(projects.db)
                 implementation(projects.io)

@@ -3,6 +3,7 @@ package team.mke.utils.db
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.dao.DaoEntityID
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.EntityClass
 import org.jetbrains.exposed.v1.jdbc.*
@@ -13,42 +14,53 @@ import team.mke.utils.db.sql.exists
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.format.DateTimeFormatter
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.ExperimentalExtendedContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 val dbDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 val dbDateTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 fun <ID : Any> ID.toEntityID(table: IdTable<ID>) = EntityID(this, table)
 
-/** Create SQL operator from [expression]. Return [Op.TRUE] if [T] is null */
-context(SqlExpressionBuilder)
-fun <T> T?.expIfNotNullOrTrue(expression: (T) -> Op<Boolean>): Op<Boolean> {
-    return if (this != null) expression(this)
-    else Op.TRUE
-}
-
 /** Apply [expression] with [value] to *where*. Do nothing if [value] is null */
+@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
 fun <T> Query.andWhereIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>): Query {
+    contract {
+        callsInPlace(expression, InvocationKind.AT_MOST_ONCE)
+        (value != null) holdsIn expression
+    }
+
     if (value != null) andWhere { expression(value) }
     return this
 }
 
 /** Apply [expression] with [value] to where. Do nothing if [value] is null */
+@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
 fun <T> Query.andHavingIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>): Query {
+    contract {
+        callsInPlace(expression, InvocationKind.AT_MOST_ONCE)
+        (value != null) holdsIn expression
+    }
+
     if (value != null) andHaving { expression(value) }
     return this
 }
 
-/** Create SQL operator from [expression]. Return [Op.FALSE] if [T] is null */
-fun <T> T?.expIfNotNullOrFalse(expression: (T) -> Op<Boolean>): Op<Boolean> {
-    return if (this != null) expression(this)
-    else Op.FALSE
+fun Op<Boolean>.andIf(condition: Boolean, op: Expression<Boolean>?): Op<Boolean> {
+    return if (condition) andIfNotNull(op) else this
 }
 
-fun Op<Boolean>.andIf(condition: Boolean, op: Expression<Boolean>?): Op<Boolean> =
-    if (condition) andIfNotNull(op) else this
+@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
+fun Op<Boolean>.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean> {
+    contract {
+        callsInPlace(op, InvocationKind.AT_MOST_ONCE)
+        condition holdsIn op
+    }
 
-fun Op<Boolean>.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean> =
-    if (condition) this and op() else this
+    return if (condition) this and op() else this
+}
 
 fun ResultRow.hasValues(c: List<Column<*>>) = c.all { this.hasValue(it) }
 
@@ -67,13 +79,22 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
  * If entity's table is [NotDeletableTable], then the entity will be not deleted.
  *
  * @param id The id value of the entity.
+ * @param message The message for the exception if entity was not found.
+ * @param block An optional block that will be applied to a query.
  * @return The entity that has this id value, or `null` if no entity was found.
  */
-inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID, message: String? = null): T {
-    val entity = if (this is NotDeletableEntityClass<ID, *>) {
-        findById(id)?.letIf({ it.isDeleted() }) { null }
+context(Transaction)
+inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID, message: String? = null, noinline block: (Query.() -> Query)? = null): T {
+    val entity = if (table is TableWithValidExpression) {
+        table.selectAll().where { table.id.eq(id) and (table as TableWithValidExpression).validQueryExpression() }
+            .let { block?.let { it1 -> it.it1() } ?: it }
+            .firstOrNull()
+            ?.let { wrapRow(it) }
     } else {
-        findById(id)
+        if (block == null) findById(id)
+        else {
+            table.selectAll().where { table.id.eq(id) }.block().firstOrNull()?.let { wrapRow(it) }
+        }
     }
 
     return entity.orThrow(id, message)
@@ -119,12 +140,12 @@ infix fun <ID: Any, T : Entity<ID>> T?.eq(other: T?) = this != null && other != 
 infix fun <ID: Any, T : Entity<ID>> T?.neq(other: T?) = this == null || other == null || id != other.id
 
 context(Transaction)
-fun EntityClass<*, *>.any(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
+fun EntityClass<*, *>.any(op: () -> Op<Boolean>): Boolean {
     return exists(op)
 }
 
 context(Transaction)
-fun EntityClass<*, *>.none(op: SqlExpressionBuilder.() -> Op<Boolean>): Boolean {
+fun EntityClass<*, *>.none(op: () -> Op<Boolean>): Boolean {
     return !exists(op)
 }
 
@@ -176,23 +197,42 @@ inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrNull(
 
 fun <ID : Any, T : IdTable<ID>> Alias<T>?.getOrColumn(col: Column<EntityID<ID>>) = this?.get(col) ?: col
 
-private fun defaultQuery(table: IdTable<*>): Op<Boolean> {
+private fun defaultQuery(table: IdTable<*>): Op<Boolean>? {
     if (table is NotDeletableTable<*>) {
         return table.validQueryExpression()
     }
-    return Op.TRUE
+    return null
 }
 
 context(EntityClass<ID, E>)
 fun <ID : Any, E : Entity<ID>> getAllImpl(
-    defaultQuery: Op<Boolean> = defaultQuery(table),
+    defaultQuery: Op<Boolean>? = defaultQuery(table),
     onQuery: Query.() -> Unit = { },
-    query: (SqlExpressionBuilder.() -> Op<Boolean>)? = null
+    query: (() -> Op<Boolean>)? = null
 ): SizedIterable<E> {
     return table
         .selectAll()
-        .where { defaultQuery.letIf(query != null) { it and query!!() } }
+        .apply {
+            if (defaultQuery != null) {
+                adjustWhere {
+                    and { defaultQuery }
+                }
+            }
+            if (query != null) {
+                adjustWhere {
+                    and { query() }
+                }
+            }
+        }
         .orderBy(table.id to SortOrder.DESC)
         .also { it.onQuery() }
         .mapLazy { wrapRow(it) }
+}
+
+fun Op<Boolean>?.and(op: () -> Op<Boolean>): Op<Boolean> {
+    return if (this != null) {
+        this and op()
+    } else {
+        op()
+    }
 }

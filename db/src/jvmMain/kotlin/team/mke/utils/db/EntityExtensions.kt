@@ -7,11 +7,13 @@ import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.EntityClass
+import java.util.Locale
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.findAnnotations
 
 /** Return this entity or throw [EntityNotFoundException] with [message] if entity is null */
 @Suppress("UNCHECKED_CAST")
@@ -78,9 +80,11 @@ inline fun <ID : Any, SOURCE : Entity<ID>, T> SOURCE.wrapValueFromAliasOrDefault
     else defaultValue()
 }
 
-fun EntityClass<*, *>.entityName(): String? {
+fun EntityClass<*, *>.entityName(locale: Locale? = null): String? {
     val kClass = (javaClass.enclosingClass as Class<*>).kotlin
-    return kClass.findAnnotation<EntityName>()?.name ?: kClass.simpleName
+    return kClass.findAnnotation<EntityName>()?.name
+        ?: kClass.findAnnotations<I18nEntityName>().find { it.key == locale?.toLanguageTag() }?.name
+        ?: kClass.simpleName
 }
 
 /** не найдена или больше не доступна */

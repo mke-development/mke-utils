@@ -1,16 +1,10 @@
 plugins {
-    kotlin("multiplatform")
+    `convention-kmp`
 }
 
 kotlin {
-    setupJvm()
-
     sourceSets {
         jvmMain {
-            languageSettings {
-                enableLanguageFeature("ContextReceivers")
-            }
-
             dependencies {
                 api(projects.common)
                 implementation(projects.env)
@@ -19,7 +13,7 @@ kotlin {
                 api(libs.exposed.dao)
                 api(libs.exposed.java.time)
                 api(libs.exposed.jdbc)
-                api(libs.exposed.migration)
+                api(libs.exposed.migration.jdbc)
                 api(libs.hikari)
 
                 api(libs.raysmith.exposedOption)

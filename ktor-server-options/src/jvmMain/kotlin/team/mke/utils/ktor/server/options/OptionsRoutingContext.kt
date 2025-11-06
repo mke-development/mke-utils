@@ -22,9 +22,9 @@ import kotlinx.serialization.serializerOrNull
 import ru.raysmith.exposedoption.Option
 import ru.raysmith.utils.letIf
 import ru.raysmith.utils.wrap
-import team.mke.utils.ktor.OptionValue
 import team.mke.utils.ktor.openapi.Method
 import team.mke.utils.ktor.openapi.OpenApiRouteBlock
+import team.mke.utils.model.OptionValue
 import kotlin.jvm.internal.MutablePropertyReference0
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.jvm.isAccessible

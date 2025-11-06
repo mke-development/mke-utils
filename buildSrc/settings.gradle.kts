@@ -1,8 +1,10 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
-}
+rootProject.name = "buildSrc"
+
+//pluginManagement {
+//    repositories {
+//        gradlePluginPortal()
+//    }
+//}
 
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
@@ -12,7 +14,7 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("libs") {
-            from(files(rootDir.parentFile.resolve("gradle/libs.versions.toml")))
+            from(files("../gradle/libs.versions.toml"))
         }
     }
 }
