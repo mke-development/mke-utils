@@ -71,22 +71,26 @@ val RoutingCall.ip: String get() {
 fun notFound(message: String?): Nothing = throw NotFoundException(message)
 
 /**
- * Generates a `File` object for a given `PartData.FileItem`.
- * If a file with the original name already exists, a unique identifier is appended to the name.
+ * Generates a `File` object for a given `PartData.FileItem` with UUID name.
  *
  * @param parentPath The parent directory path where the file should be located.
- * @return A `File` object representing the file with a unique name if necessary.
+ * @param fallbackExtension
+ * @return A `File` object representing the file with a unique name.
  */
-fun PartData.FileItem.prepareFile(parentPath: String): File {
+fun PartData.FileItem.prepareFile(
+    parentPath: String,
+    fallbackExtension: String = "",
+    nextName: () -> String = { uuid() }
+): File {
     val path = if (parentPath.isEmpty()) "" else "${parentPath.dropLastWhile { it == '/' }}/"
-    val defaultName by lazy { uuid() }
-    val originalName = originalFileName ?: defaultName
-    var file = File("$path$originalName")
 
-    if (file.exists()) {
-        val (name, ext) = File(originalName).let { it.nameWithoutExtension to it.extension }
-        file = File("$path${name}_$defaultName.$ext")
-    }
+    var name: String
+    var file: File
+
+    do {
+        name = "${nextName()}${originalFileName?.substringAfterLast('.', "")?.let { ".$it" } ?: fallbackExtension}"
+        file = File("$path$name")
+    } while (file.exists())
 
     return file
 }

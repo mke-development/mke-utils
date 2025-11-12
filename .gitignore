@@ -2,6 +2,7 @@
 **/.kotlin
 **/.vscode
 **/.DS_Store
-
 **/build
+
+.idea
 kotlin-js-store

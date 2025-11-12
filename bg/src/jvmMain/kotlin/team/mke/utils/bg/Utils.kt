@@ -18,6 +18,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 
+// TODO add bgDaily
+
 /**
  * Создает и регистрирует фоновый процесс из [block]
  *
