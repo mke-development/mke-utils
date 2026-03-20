@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "2.17.1"
+version = "2.17.2"
 
 allprojects {
     repositories {

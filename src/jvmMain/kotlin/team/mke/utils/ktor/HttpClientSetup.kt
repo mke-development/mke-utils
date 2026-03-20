@@ -68,8 +68,8 @@ internal fun Throwable.isTimeoutException(): Boolean {
 fun HttpClientConfig<*>.installHttpRequestRetry() = install(HttpRequestRetry) {
     exponentialDelay()
 
-    retryOnServerErrors(maxRetries = Int.MAX_VALUE)
-    retryOnExceptionIf(Int.MAX_VALUE) { _, cause ->
+    retryOnServerErrors(maxRetries = Int.MAX_VALUE - 1) // -1 because HttpSend adds one more retry
+    retryOnExceptionIf(Int.MAX_VALUE - 1) { _, cause ->
         when {
             cause.isTimeoutException() -> true
             else -> false
