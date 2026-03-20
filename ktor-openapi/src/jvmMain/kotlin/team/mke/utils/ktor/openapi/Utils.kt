@@ -8,6 +8,7 @@ import io.github.smiley4.schemakenerator.core.annotations.Name
 import io.github.smiley4.schemakenerator.core.annotations.Type
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.serializerOrNull
+import java.lang.reflect.ParameterizedType
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -66,10 +67,13 @@ fun SchemaConfig.schema(type: KClass<*>) = schema(
 )
 
 @OptIn(ExperimentalStdlibApi::class)
-fun KCallable<*>.type() = findAnnotation<Type>()?.type?.let { setOf(it) } ?: when(returnType.javaType) {
+fun KCallable<*>.type() = findAnnotation<Type>()?.type?.let { setOf(it) } ?: when(val type = returnType.javaType) {
     String::class.java -> setOf("string")
     Int::class.java, Long::class.java, BigDecimal::class.java, Double::class.java, Float::class.java -> setOf("number")
     LocalDate::class.java, ZonedDateTime::class.java, LocalDateTime::class.java -> setOf("string")
     Boolean::class.java -> setOf("boolean")
-    else -> setOf("json")
+    is ParameterizedType if (type.rawType == List::class.java || type.rawType == Set::class.java) -> {
+        setOf("json-array")
+    }
+    else -> setOf("object")
 }

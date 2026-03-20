@@ -45,6 +45,7 @@ allprojects {
         withType<KotlinJvmCompile> {
             compilerOptions {
                 freeCompilerArgs.add("-Xallow-holdsin-contract")
+                freeCompilerArgs.add("-Xallow-condition-implies-returns-contracts")
             }
         }
     }
@@ -142,7 +143,6 @@ catalog {
 
         bundle("ktor-server", listOf(
             projects.ktorServerOptions,
-            projects.ktorServerExtensionsDb,
             projects.ktorServerExtensionsValidator,
         ).map { it.name })
     }

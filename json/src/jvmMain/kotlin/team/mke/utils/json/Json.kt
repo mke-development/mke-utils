@@ -16,7 +16,6 @@ import java.time.ZonedDateTime
  * Создает экземпляр [kotlinx.serialization.json.Json] используя настройки [from] -> [applyDefaultJson] -> [builderAction]
  * */
 fun json(from: Json, builderAction: JsonBuilder.() -> Unit) = Json(from) {
-    applyDefaultJson()
     builderAction()
 }
 
@@ -38,6 +37,7 @@ val json = Json {
  * prettyPrint = Environment.isDev()
  * serializersModule = SerializersModule {
  *     contextual(LocalDate::class, LocalDateSerializer)
+ *     contextual(LocalTime::class, LocalTimeSerializer)
  *     contextual(ZonedDateTime::class, ZonedDateTimeSerializer)
  *     contextual(BigDecimal::class, BigDecimalSerializer)
  *     safe {

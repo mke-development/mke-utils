@@ -3,15 +3,11 @@ package team.mke.utils.ktor.server.options
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
 import io.github.smiley4.ktoropenapi.put
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receiveNullable
-import io.ktor.server.request.receiveText
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingContext
-import io.ktor.server.routing.route
-import io.ktor.util.reflect.reifiedType
-import io.ktor.util.reflect.typeInfo
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.util.reflect.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.ContextualSerializer
@@ -53,7 +49,7 @@ class OptionsRoutingContext {
         mutex: Mutex? = null,
         path: String = property.name,
         returnOnLocked: Boolean = true,
-        serializer: KSerializer<T & Any> = (serializerOrNull(typeInfo<T>().reifiedType)
+        serializer: KSerializer<T & Any> = (json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
@@ -70,7 +66,7 @@ class OptionsRoutingContext {
         mutex: Mutex? = null,
         path: String = property.name,
         returnOnLocked: Boolean = true,
-        serializer: KSerializer<T & Any> = (serializerOrNull(typeInfo<T>().reifiedType)
+        serializer: KSerializer<T & Any> = (json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
@@ -115,7 +111,10 @@ class OptionsRoutingContext {
             handler.register(path)
 
             get(docsGet) {
-                call.respond(handler.get())
+                call.respond(json.encodeToJsonElement(
+                    serializer = OptionValue.serializer(serializer),
+                    value = handler.get() as OptionValue<T & Any>
+                ))
             }
 
             put(docsPut) {

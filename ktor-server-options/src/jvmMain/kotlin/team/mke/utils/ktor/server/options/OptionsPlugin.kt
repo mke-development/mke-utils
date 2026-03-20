@@ -45,10 +45,10 @@ class OptionsPluginConfiguration {
 
         response {
             ok {
-                body<Map<String, OptionValue<*>>> {
-                    example("Список настроек") {
-                        value = mapOf("foo" to OptionValue(1), "bar" to OptionValue(true))
-                    }
+                body<Map<String, OptionValue<Any?>>> {
+//                    example("Список настроек") { // TODO to fix that provide Json builder (with OptionValue<Any?> serializer) for ExampleEncoder
+//                        value = mapOf("foo" to OptionValue(1), "bar" to OptionValue(true))
+//                    }
                 }
             }
             notFound {
@@ -72,18 +72,18 @@ class OptionsPluginConfiguration {
         request {
             body<Map<String, Any?>> {
                 required = true
-                example("Список ключей") {
-                    value = mapOf("foo" to 2, "bar" to false)
-                }
+//                example("Список ключей") { // TODO to fix that provide Json builder (with Map<String, Any?> serializer) for ExampleEncoder
+//                    value = mapOf("foo" to 2, "bar" to false)
+//                }
             }
         }
 
         response {
             ok {
-                body<Map<String, OptionValue<*>>> {
-                    example("Список измененных настроек") {
-                        value = mapOf("foo" to OptionValue(1), "bar" to OptionValue(true))
-                    }
+                body<Map<String, OptionValue<Any?>>> {
+//                    example("Список измененных настроек") { // TODO to fix that provide Json builder (with OptionValue<Any?> serializer) for ExampleEncoder
+//                        value = mapOf("foo" to OptionValue(1), "bar" to OptionValue(true))
+//                    }
                 }
             }
             notFound {
@@ -94,9 +94,9 @@ class OptionsPluginConfiguration {
         putDocsSetup()
     }
 
-    internal var configuration: context(OptionsPluginConfiguration, OptionsRoutingContext, Route) () -> Unit = {}
+    internal var configuration: context(OptionsPluginConfiguration, Route) OptionsRoutingContext.() -> Unit = {}
 
-    fun routes(block: context(OptionsPluginConfiguration, OptionsRoutingContext, Route) () -> Unit) {
+    fun routes(block: context(OptionsPluginConfiguration, Route) OptionsRoutingContext.() -> Unit) {
         configuration = block
     }
 }
@@ -112,7 +112,7 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit)
         )
 
         val context = OptionsRoutingContext()
-        config.configuration(config, context, this)
+        config.configuration.invoke(config, this, context)
 
         get(config.getDocs) {
             val keys = call.parameters.getOrFail("keys").split(",")

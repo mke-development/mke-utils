@@ -4,11 +4,13 @@ import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.dao.EntityClass
 
 class EntityNotFoundException(
-    val entity: EntityClass<*, *>, val id: EntityID<*>? = null, message: String? = null
+    val entity: EntityClass<*, *>, val id: Any? = null, message: String? = null
 ) : RuntimeException(message ?: buildString {
     append("Сущность \"").append(entity.entityName() ?: "").append("\"")
     if (id != null) {
         append(" с id $id")
     }
     append(" не найдена")
-})
+}) {
+    constructor(entity: EntityClass<*, *>, id: EntityID<*>? = null, message: String? = null) : this(entity, id?.value, message)
+}

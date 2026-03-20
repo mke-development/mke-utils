@@ -27,8 +27,8 @@ include("ktor-client-extensions-json")
 include("ktor-server-options")
 include("ktor-server-extensions")
 include("ktor-server-extensions-validator")
-include("ktor-server-extensions-db")
-include("ktor-devDelay")
+include("ktor-server-pagination")
+include("ktor-devplugins")
 include("logging")
 include("mail")
 include("serialization")
@@ -40,6 +40,7 @@ include("catalog")
 include("model")
 include("model-json")
 include("test-db")
+include("locale")
 
 rootProject.children.forEach {
     it.buildFileName = it.name + ".gradle.kts"
@@ -56,7 +57,7 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("kotlinWrappers") {
-            val wrappersVersion = "2025.6.0"
+            val wrappersVersion = "2025.12.7"
             from("org.jetbrains.kotlin-wrappers:kotlin-wrappers-catalog:$wrappersVersion")
         }
     }

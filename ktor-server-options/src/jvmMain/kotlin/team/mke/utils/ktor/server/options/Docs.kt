@@ -21,7 +21,7 @@ abstract class OptionMethodImpl : Method {
     var setupTest: RouteConfig.() -> Unit = {}
 
     @JvmName("generateF")
-    inline fun <reified T : Any> generate(
+    inline fun <reified T : Any?> generate(
         name: String,
         responseExample: Pair<String, T>,
         requestExample: Pair<String, T>,
@@ -76,7 +76,7 @@ abstract class OptionMethodImpl : Method {
     }
 
     @JvmName("testF")
-    inline fun <reified T : Any> test(
+    inline fun <reified T : Any?> test(
         description: String,
         requestExample: Pair<String, T>,
         crossinline setup: RouteConfig.() -> Unit = { this@OptionMethodImpl.setupTest(this) },

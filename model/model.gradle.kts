@@ -8,6 +8,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.serialization.json)
                 implementation(libs.swagger.annotations)
                 implementation(libs.raysmith.utils)
                 implementation(libs.kenerator.core)

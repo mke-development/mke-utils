@@ -1,16 +1,19 @@
 package team.mke.utils.model
 
-import jdk.jfr.Description
+import io.github.smiley4.schemakenerator.core.annotations.Description
+import io.github.smiley4.schemakenerator.core.annotations.Name
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
+// TODO move to ktor-server-options module
 /**
  * Представляет значение опции
  *
  * @property value Значение
  * */
-@Serializable
 @Description("Представляет значение опции")
+@Serializable
+@Name("OptionValue")
 data class OptionValue<out T : Any?>(
 
     @Description("Значение")

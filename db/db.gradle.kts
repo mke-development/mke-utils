@@ -4,6 +4,12 @@ plugins {
 
 kotlin {
     sourceSets {
+        commonMain {
+            dependencies {
+                implementation(projects.ktorServerPagination)
+            }
+        }
+
         jvmMain {
             dependencies {
                 api(projects.common)

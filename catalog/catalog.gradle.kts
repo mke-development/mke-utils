@@ -19,7 +19,6 @@ catalog {
 
         bundle("ktor-server", listOf(
             projects.ktorServerOptions,
-            projects.ktorServerExtensionsDb,
             projects.ktorServerExtensionsValidator,
         ).map { it.name })
     }

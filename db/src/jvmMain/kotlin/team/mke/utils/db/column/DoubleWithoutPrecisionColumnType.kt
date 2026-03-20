@@ -3,6 +3,8 @@ package team.mke.utils.db.column
 import org.jetbrains.exposed.v1.core.ColumnType
 import org.jetbrains.exposed.v1.core.vendors.currentDialect
 
+// TODO add ZonedDateTimeColumnType with open ZoneId value
+
 class DoubleWithoutPrecisionColumnType : ColumnType<Double>() {
     override fun sqlType(): String = currentDialect.dataTypeProvider.doubleType()
     override fun valueFromDB(value: Any): Double = when (value) {

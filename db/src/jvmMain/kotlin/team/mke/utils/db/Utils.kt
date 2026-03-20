@@ -1,9 +1,23 @@
 package team.mke.utils.db
 
-import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.Alias
+import org.jetbrains.exposed.v1.core.Column
+import org.jetbrains.exposed.v1.core.ColumnSet
+import org.jetbrains.exposed.v1.core.DecimalColumnType
+import org.jetbrains.exposed.v1.core.Expression
+import org.jetbrains.exposed.v1.core.IColumnType
+import org.jetbrains.exposed.v1.core.Op
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.TextColumnType
+import org.jetbrains.exposed.v1.core.Transaction
+import org.jetbrains.exposed.v1.core.VarCharColumnType
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.andIfNotNull
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
-import org.jetbrains.exposed.v1.dao.DaoEntityID
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.orIfNotNull
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.EntityClass
 import org.jetbrains.exposed.v1.jdbc.*
@@ -26,25 +40,31 @@ fun <ID : Any> ID.toEntityID(table: IdTable<ID>) = EntityID(this, table)
 
 /** Apply [expression] with [value] to *where*. Do nothing if [value] is null */
 @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
-fun <T> Query.andWhereIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>): Query {
+fun <T> Query.andWhereIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>?): Query {
     contract {
-        callsInPlace(expression, InvocationKind.AT_MOST_ONCE)
         (value != null) holdsIn expression
+        (value != null) implies returnsNotNull()
     }
 
-    if (value != null) andWhere { expression(value) }
+    if (value != null) {
+        val where = expression(value)
+        if (where != null) andWhere { where }
+    }
     return this
 }
 
 /** Apply [expression] with [value] to where. Do nothing if [value] is null */
 @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
-fun <T> Query.andHavingIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>): Query {
+fun <T> Query.andHavingIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>?): Query {
     contract {
-        callsInPlace(expression, InvocationKind.AT_MOST_ONCE)
         (value != null) holdsIn expression
+        (value != null) implies returnsNotNull()
     }
 
-    if (value != null) andHaving { expression(value) }
+    if (value != null) {
+        val having = expression(value)
+        if (having != null) andHaving { having }
+    }
     return this
 }
 
@@ -197,42 +217,68 @@ inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrNull(
 
 fun <ID : Any, T : IdTable<ID>> Alias<T>?.getOrColumn(col: Column<EntityID<ID>>) = this?.get(col) ?: col
 
-private fun defaultQuery(table: IdTable<*>): Op<Boolean>? {
-    if (table is NotDeletableTable<*>) {
-        return table.validQueryExpression()
-    }
-    return null
-}
-
-context(EntityClass<ID, E>)
-fun <ID : Any, E : Entity<ID>> getAllImpl(
-    defaultQuery: Op<Boolean>? = defaultQuery(table),
-    onQuery: Query.() -> Unit = { },
-    query: (() -> Op<Boolean>)? = null
-): SizedIterable<E> {
-    return table
-        .selectAll()
-        .apply {
-            if (defaultQuery != null) {
-                adjustWhere {
-                    and { defaultQuery }
-                }
-            }
-            if (query != null) {
-                adjustWhere {
-                    and { query() }
-                }
-            }
-        }
-        .orderBy(table.id to SortOrder.DESC)
-        .also { it.onQuery() }
-        .mapLazy { wrapRow(it) }
-}
-
 fun Op<Boolean>?.and(op: () -> Op<Boolean>): Op<Boolean> {
     return if (this != null) {
         this and op()
     } else {
         op()
     }
+}
+
+@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
+@JvmName("andIfNotNullNullable")
+fun <T> Op<Boolean>?.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>? {
+    contract {
+        (value != null) implies returnsNotNull()
+    }
+
+    return if (this != null && value != null) {
+        this andIfNotNull op(value)
+    } else if (value != null) {
+        op(value)
+    } else {
+        this
+    }
+}
+
+@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
+fun <T> Op<Boolean>.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
+    contract {
+        (value != null) implies returnsNotNull()
+    }
+
+    return if (value != null) {
+        this andIfNotNull op(value)
+    }else {
+        this
+    }
+}
+
+fun Op<Boolean>?.andIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
+    return if (this != null) {
+        this andIfNotNull op()
+    } else {
+        op()
+    }
+}
+
+fun <T> Op<Boolean>.orIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>? {
+    return if (value != null) {
+        this.orIfNotNull(op(value))
+    } else {
+        this
+    }
+}
+
+fun Op<Boolean>?.orIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
+    return if (this != null) {
+        this orIfNotNull op()
+    } else {
+        op()
+    }
+}
+
+@JvmName("andIfNullable")
+fun Op<Boolean>?.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean>? {
+    return if (condition) and(op) else this
 }

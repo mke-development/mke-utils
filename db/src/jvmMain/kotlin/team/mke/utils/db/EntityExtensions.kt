@@ -17,9 +17,9 @@ import kotlin.reflect.full.findAnnotations
 
 /** Return this entity or throw [EntityNotFoundException] with [message] if entity is null */
 @Suppress("UNCHECKED_CAST")
-inline fun <ID : Any, reified T : Entity<ID>> T?.orThrow(id: ID? = null, message: String? = null) = this ?: run {
+inline fun <ID : Any, reified T : Entity<ID>> T?.orThrow(id: Any? = null, message: String? = null) = this ?: run {
     val entityClass = T::class.companionObject?.objectInstance as EntityClass<ID, *>
-    throw EntityNotFoundException(entityClass, id?.let { EntityID(it, entityClass.table) }, message)
+    throw EntityNotFoundException(entityClass, id, message)
 }
 
 inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<ID>> SOURCE.wrapRowOrDefault(

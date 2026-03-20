@@ -133,14 +133,21 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
 
         if (createMigrationsFiles) {
             File("db-migrations").mkdirs()
-            MigrationUtils.generateMigrationScript(
-                *tables,
-                scriptDirectory = "db-migrations",
-                scriptName = nowZoned().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")),
-                withLogs = withLogs
-            ).also {
-                transaction {
-                    exec(it.readText())
+
+            val hasStatements = MigrationUtils
+                .statementsRequiredForDatabaseMigration(*tables, withLogs = withLogs)
+                .isNotEmpty()
+
+            if (hasStatements) {
+                MigrationUtils.generateMigrationScript(
+                    *tables,
+                    scriptDirectory = "db-migrations",
+                    scriptName = nowZoned().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")),
+                    withLogs = withLogs
+                ).also {
+                    transaction {
+                        exec(it.readText())
+                    }
                 }
             }
         } else {
@@ -233,7 +240,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         return HikariDataSource(config)
     }
 
-    fun registerEagerlyCollector(cacheEnabled: Boolean = true, collector: Collector.(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?) -> Array<Prop>) {
+    fun registerEagerlyCollector(cacheEnabled: Boolean = true, collector: EagerFieldsCollector.(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?) -> Array<Prop>) {
         eagerCollectorCacheEnabled = cacheEnabled
         eagerCollector = c@ { dtoClass: KClass<*> ->
             if (eagerCollectorCacheEnabled) {
@@ -243,7 +250,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
                 }
             }
 
-            object : Collector {
+            object : EagerFieldsCollector {
                 override fun collect(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?): Array<Prop> {
                     return collector(dtoClass, entityClass)
                 }
@@ -252,9 +259,3 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         }
     }
 }
-
-interface Collector {
-    fun collect(dtoClass: KClass<*>, entityClass: EntityClass<*, *>? = null): Array<Prop>
-}
-
-inline fun <reified T> Collector.collect(entityClass: EntityClass<*, *>? = null) = collect(T::class, entityClass)

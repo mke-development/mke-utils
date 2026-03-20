@@ -31,7 +31,7 @@ fun SchemaGenerator.TypeOverwrites.LocalTime(schema: Schema<Any>.() -> Unit = {}
     schema = {
         Schema<Any>().apply {
             types = setOf("string")
-            format = "HH:mm"
+            format = "HH:mm:ss"
             schema()
         }
     },

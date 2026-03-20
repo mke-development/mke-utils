@@ -17,27 +17,40 @@ import team.mke.utils.env.Environment
 fun defaultHttpClient(
     engine: HttpClientEngine,
     logger: org.slf4j.Logger,
-    logLevel: LogLevel = LogLevel.INFO,
+
+    loggingConfig: (LoggingConfig.() -> Unit)? = {},
+    httpRequestRetryConfig: (HttpRequestRetryConfig.() -> Unit)? = {},
+    httpSendConfig: (HttpSend.Config.() -> Unit)? = {},
+
     block: HttpClientConfig<*>.() -> Unit = {}
 ) = HttpClient(engine) {
     expectSuccess = true
-    developmentMode = Environment.isDev()
-    installLogging(logger, logLevel)
-    installHttpRequestRetry()
-    install(HttpSend) {
-        maxSendCount = Int.MAX_VALUE
+
+    if (loggingConfig != null) {
+        install(Logging, loggingConfig)
+    }
+    if (httpRequestRetryConfig != null) {
+        installHttpRequestRetry(httpRequestRetryConfig)
+    }
+
+    if (httpSendConfig != null) {
+        install(HttpSend) {
+            maxSendCount = Int.MAX_VALUE
+            httpSendConfig()
+        }
     }
 
     block(this)
 }
 
-fun HttpClientConfig<*>.installLogging(logger: org.slf4j.Logger, level: LogLevel = LogLevel.INFO) = install(Logging) {
-    this.level = level
+fun HttpClientConfig<*>.installLogging(logger: org.slf4j.Logger, loggingConfig: LoggingConfig.() -> Unit) = install(Logging) {
+    this.level = LogLevel.INFO
     this.logger = object : Logger {
         override fun log(message: String) {
             logger.debug(message)
         }
     }
+    loggingConfig()
 }
 
 internal fun Throwable.isTimeoutException(): Boolean {
@@ -47,16 +60,18 @@ internal fun Throwable.isTimeoutException(): Boolean {
             exception is SocketTimeoutException
 }
 
-fun HttpClientConfig<*>.installHttpRequestRetry() = install(HttpRequestRetry) {
+fun HttpClientConfig<*>.installHttpRequestRetry(httpRequestRetryConfig: HttpRequestRetryConfig.() -> Unit) = install(HttpRequestRetry) {
     exponentialDelay()
 
-    retryOnServerErrors(maxRetries = Int.MAX_VALUE)
-    retryOnExceptionIf(Int.MAX_VALUE) { _, cause ->
+    retryOnServerErrors(maxRetries = Int.MAX_VALUE - 1) // -1 because HttpSend adds one more retry
+    retryOnExceptionIf(Int.MAX_VALUE - 1) { _, cause ->
         when {
             cause.isTimeoutException() -> true
             else -> false
         }
     }
+
+    httpRequestRetryConfig()
 }
 
 fun HttpRequestBuilder.acceptApplicationJson() = headers.set(HttpHeaders.Accept, ContentType.Application.Json.toString())

@@ -18,13 +18,11 @@ abstract class BaseBackgroundProcess(
     val crashInterceptor: CrashInterceptor<*>,
     override val logger: Logger = LoggerFactory.getLogger("bg"),
     override val id: String = uuid(),
-    val autoStarted: Boolean = true
 ) : BackgroundProcess {
     protected var job: Job? = null
     override val isActive get() = job?.isActive == true
 
-
-    protected open var isReadyToRestart = !autoStarted
+    protected open var isReadyToRestart = true
     protected var restartOnFinish = false
 
     var iterations = 0
@@ -89,3 +87,4 @@ abstract class BaseBackgroundProcess(
         }
     }
 }
+

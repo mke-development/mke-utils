@@ -1,21 +1,17 @@
 package team.mke.utils.bg
 
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.slf4j.Logger
-import team.mke.utils.env.env
 import ru.raysmith.utils.ms
-import ru.raysmith.utils.uuid
 import ru.raysmith.utils.now
 import ru.raysmith.utils.today
+import ru.raysmith.utils.uuid
 import team.mke.utils.crashinterceptor.CrashInterceptor
-import team.mke.utils.safe
+import team.mke.utils.env.env
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 
 // TODO add bgDaily
@@ -51,7 +47,7 @@ fun bg(
  * @param start если false, то процесс не будет запущен
  * @param onCancel вызывается при отмене процесса
  * @param id уникальный идентификатор
- * @param maxIteration максимальное количество итераций. -1 для отсутствия лимита
+ * @param maxIterations максимальное количество итераций. -1 для отсутствия лимита
  * */
 fun bgWhile(
     crashInterceptor: CrashInterceptor<*>,
@@ -62,43 +58,16 @@ fun bgWhile(
     start: Boolean = true,
     onCancel: () -> Unit = {},
     id: String = uuid(),
-    maxIteration: Int = -1,
-    block: suspend BackgroundProcess.() -> Unit
-) = object : BaseBackgroundProcess(name, crashInterceptor, id = id, autoStarted = start) {
-    override val mutex: Any = object {}
+    maxIterations: Int = -1,
+    block: suspend BaseWhileBackgroundProcess.() -> Unit
+) = object : BaseWhileBackgroundProcess(crashInterceptor, name, logger, id) {
+    override val maxIterations: Int = maxIterations
+    override suspend fun action() = block()
+    override fun delay(): Duration = delay()
+    override fun startDelay(): Duration = startDelay()
     override fun onCancel() {
         super.onCancel()
         onCancel()
-    }
-    override fun run() {
-        val sd = startDelay()
-        synchronized(mutex) {
-            if (sd == ZERO) {
-                isReadyToRestart = false
-            }
-        }
-
-        job = Background.scope.launch(handler + coroutineName) {
-            delay(sd)
-            while (isActive) {
-                synchronized(mutex) { isReadyToRestart = false }
-                safe(crashInterceptor, logger) {
-                    block()
-                }
-                synchronized(mutex) { isReadyToRestart = true }
-                iterations++
-                if (maxIteration != -1 && iterations >= maxIteration) {
-                    break
-                }
-                delay(delay())
-                synchronized(mutex) { isReadyToRestart = false }
-            }
-        }
-    }
-
-    suspend fun delay(delay: Duration) {
-        logger.debug("Delay for $name: {}", delay)
-        kotlinx.coroutines.delay(delay)
     }
 }.apply {
     if (start) start()
@@ -107,7 +76,7 @@ fun bgWhile(
 // TODO readme
 //| name                           | type | required | description                                                                                                                                                                  |
 //|--------------------------------|------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-//| BG_DAILY_EVENT_DELAY_TOLERANCE | int  |          | Время в секундах в течение которого _ежедневное_ событие будет считаться не пропущенным, когда запуск фонового процесса произошел после отметки времени. По умолчанию – 300. |
+//| BG_DAILY_EVENT_DELAY_TOLERANCE | int  |          | Время в секундах в течение которого _ежедневное_ событие будет считаться не пропущенным, когда запуск фонового процесса произошел после отметки времени запуска процесса. По умолчанию – 300. |
 private val timeTolerance by env("BG_DAILY_EVENT_DELAY_TOLERANCE", 300) { it.toInt() }
 
 /**

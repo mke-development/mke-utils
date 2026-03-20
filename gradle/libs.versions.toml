@@ -1,35 +1,34 @@
 [versions]
-benManes-versions = "0.52.0"
-dokka = "2.0.0"
-exposed = "1.0.0-rc-1"
+benManes-versions = "0.53.0"
+commonsImaging = "1.0.0-alpha5"
+dokka = "2.1.0"
+h2 = "2.4.240"
+exposed = "1.0.0-rc-4"
 exposedOption = "4.0.2"
+javax-mail = "1.6.2"
 hikari = "7.0.2"
-kotest = "6.0.1"
+kenerator = "2.5.0"
+kotest = "6.0.7"
 kotest-html-reporter = "0.8.2"
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.9.0"
 kotlinx-coroutines = "1.10.2"
-kover = "0.9.1"
-ktor = "3.2.3"
+kover = "0.9.4"
+ktor = "3.3.3"
+ktor-openapi-tools = "5.4.0"
 log4j = "2.24.3"
-mockk = "1.14.5"
-nmcp = "0.0.9"
-sentry = "8.20.0"
-slf4j = "2.0.17"
-utils = "3.4.0"
-xmlutil = "0.91.2"
 markdown = "0.7.3"
-javax-mail = "1.6.2"
+mockk = "1.14.7"
+nmcp = "0.0.9"
+publish = "0.35.0"
 reflections = "0.10.2"
-tika = "3.2.2"
-commonsImaging = "1.0.0-alpha5"
-kenerator = "2.3.0"
-publish = "0.34.0"
-dependency-analysis = "2.17.0"
-ktor-openapi-tools = "5.2.0"
-ksp = "2.1.21-2.0.2"
-swagger = "2.2.26"
+sentry = "8.29.0"
+slf4j = "2.0.17"
+swagger = "2.2.41"
+tika = "3.2.3"
+utils = "3.4.1"
+xmlutil = "0.91.3"
 
 [libraries]
 # kotlin
@@ -99,7 +98,7 @@ kotest-extensions-junitxml = { module = "io.kotest:kotest-extensions-junitxml", 
 kotest-html-reporter = { module = "com.michaelstrasser:kotest-html-reporter", version.ref = "kotest-html-reporter" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
-h2 = { module = "com.h2database:h2", version = "2.3.232" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
 
 # gradle
 gradle-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -114,6 +113,5 @@ nmcp = { id = "com.gradleup.nmcp", version.ref = "nmcp" }
 benManes-versions = { id = "com.github.ben-manes.versions", version.ref = "benManes-versions" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 convention-kmp = { id = "kmp" }
 convention-tests = { id = "tests" }

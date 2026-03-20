@@ -79,7 +79,7 @@ fun notFound(message: String?): Nothing = throw NotFoundException(message)
  */
 fun PartData.FileItem.prepareFile(
     parentPath: String,
-    fallbackExtension: String = "",
+    fallbackExtension: String? = null,
     nextName: () -> String = { uuid() }
 ): File {
     val path = if (parentPath.isEmpty()) "" else "${parentPath.dropLastWhile { it == '/' }}/"
@@ -88,7 +88,7 @@ fun PartData.FileItem.prepareFile(
     var file: File
 
     do {
-        name = "${nextName()}${originalFileName?.substringAfterLast('.', "")?.let { ".$it" } ?: fallbackExtension}"
+        name = "${nextName()}${originalFileName?.substringAfterLast('.', "")?.ifEmpty { null }?.let { ".$it" } ?: fallbackExtension?.let { ".$it" } ?: ""}"
         file = File("$path$name")
     } while (file.exists())
 

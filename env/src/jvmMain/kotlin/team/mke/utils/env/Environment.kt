@@ -10,7 +10,7 @@ val env by lazy { Environment.value }
 
 /** Значение из env.properties */
 enum class Environment {
-    DEV, PROD;
+    DEV, SANDBOX, PROD;
 
     companion object {
         val logger = LoggerFactory.getLogger("mke-utils")
@@ -31,7 +31,11 @@ enum class Environment {
                 throw e
             }
         }
+
+        @Deprecated("Use !isProd() instead", ReplaceWith("!Environment.isProd()"))
         fun isDev() = value != PROD
+
+        fun isProd() = value == PROD
     }
 }
 

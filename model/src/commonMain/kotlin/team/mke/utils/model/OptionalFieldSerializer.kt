@@ -32,3 +32,4 @@ open class OptionalFieldSerializer<T>(
         }
     }
 }
+
