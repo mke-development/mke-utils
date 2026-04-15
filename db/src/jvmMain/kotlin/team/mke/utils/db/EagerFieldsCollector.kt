@@ -12,6 +12,6 @@ interface EagerFieldsCollector {
 
 inline fun <reified T> EagerFieldsCollector.collect(entityClass: EntityClass<*, *>? = null) = collect(T::class, entityClass)
 
-context(EagerFieldsCollector)
+context(collector: EagerFieldsCollector)
 inline fun <reified T> Array<KProperty1<out Entity<*>, Any?>>.collect(entityClass: EntityClass<*, *>? = null) =
-    this + collect(T::class, entityClass)
+    this + collector.collect(T::class, entityClass)

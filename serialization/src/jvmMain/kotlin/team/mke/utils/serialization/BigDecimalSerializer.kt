@@ -27,10 +27,15 @@ object BigDecimalSerializer: KSerializer<BigDecimal> {
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: Encoder, value: BigDecimal) {
+        val fixedScaleValue = if (value.scale() == 0) {
+            value.setScale(1)
+        } else {
+            value
+        }
 
         when(encoder) {
-            is JsonEncoder -> encoder.encodeJsonElement(JsonUnquotedLiteral(value.toPlainString()))
-            else -> encoder.encodeString(value.toPlainString())
+            is JsonEncoder -> encoder.encodeJsonElement(JsonUnquotedLiteral(fixedScaleValue.toPlainString()))
+            else -> encoder.encodeString(fixedScaleValue.toPlainString())
         }
     }
 

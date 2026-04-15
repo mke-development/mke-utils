@@ -27,19 +27,19 @@ fun defaultQuery(table: IdTable<*>): Op<Boolean>? {
 
 val IdTable<*>.defaultSort get() = id to SortOrder.DESC
 
-context(EntityClass<*, *>)
-fun <T> SizedIterable<T>.withDefaultOrderBy() = orderBy(table.defaultSort)
+context(ec: EntityClass<*, *>)
+fun <T> SizedIterable<T>.withDefaultOrderBy() = orderBy(ec.table.defaultSort)
 
 inline fun <reified T : Entity<*>> SizedIterable<T>.withDefaultOrderBy() =
     orderBy((T::class.companionObjectInstance as EntityClass<*, *>).table.defaultSort)
 
-context(EntityClass<ID, E>)
+context(ec: EntityClass<ID, E>)
 fun <ID : Any, E : Entity<ID>> getAllImpl(
-    defaultQuery: Op<Boolean>? = defaultQuery(table),
+    defaultQuery: Op<Boolean>? = defaultQuery(ec.table),
     onQuery: Query.() -> Unit = { },
     query: (() -> Op<Boolean>)? = null
 ): SizedIterable<E> {
-    return table
+    return ec.table
         .selectAll()
         .apply {
             if (defaultQuery != null) {
@@ -54,18 +54,18 @@ fun <ID : Any, E : Entity<ID>> getAllImpl(
             }
         }
         .also { it.onQuery() }
-        .mapLazy { wrapRow(it) }
+        .mapLazy { ec.wrapRow(it) }
 }
 
 
-context(EntityClass<ID, E>)
+context(ec: EntityClass<ID, E>)
 fun <ID : Any, E : Entity<ID>, C : Column<*>, T : Comparable<T>> getAllImpl(
     paginationData: Pair<PaginationData<T>?, Pair<C, SortOrder>>? = null,
-    defaultQuery: Op<Boolean>? = defaultQuery(table),
+    defaultQuery: Op<Boolean>? = defaultQuery(ec.table),
     onQuery: Query.() -> Unit = { },
     query: (() -> Op<Boolean>)? = null
 ): SizedIterable<E> {
-    return table
+    return ec.table
         .selectAll()
         .apply {
             if (defaultQuery != null) {
@@ -114,5 +114,5 @@ fun <ID : Any, E : Entity<ID>, C : Column<*>, T : Comparable<T>> getAllImpl(
             } else it
         }
         .also { it.onQuery() }
-        .mapLazy { wrapRow(it) }
+        .mapLazy { ec.wrapRow(it) }
 }

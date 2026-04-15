@@ -30,17 +30,17 @@ class OptionsRoutingContext {
         internal val sets = mutableMapOf<Set<String>, (() -> Unit)?>()
     }
 
-    context(OptionsRoutingContext)
+    context(_: OptionsRoutingContext)
     fun registerSet(vararg properties: KMutableProperty<*>, verification: (() -> Unit)? = null) {
         sets[properties.map { it.name }.toSet()] = verification
     }
 
-    context(OptionsRoutingContext)
+    context(_: OptionsRoutingContext)
     fun registerSet(vararg properties: String, verification: (() -> Unit)? = null) {
         sets[properties.toSet()] = verification
     }
 
-    context(Route, OptionsPluginConfiguration)
+    context(_: Route, config: OptionsPluginConfiguration)
     @OptIn(ExperimentalSerializationApi::class)
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any?> setup(
@@ -49,13 +49,13 @@ class OptionsRoutingContext {
         mutex: Mutex? = null,
         path: String = property.name,
         returnOnLocked: Boolean = true,
-        serializer: KSerializer<T & Any> = (json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
+        serializer: KSerializer<T & Any> = (config.json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
     ) = setup(property, docs.Get, docs.Put, docs.Test, mutex, path, returnOnLocked, serializer, test, verification)
 
-    context(Route, OptionsPluginConfiguration)
+    context(route: Route, config: OptionsPluginConfiguration)
     @OptIn(ExperimentalSerializationApi::class)
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any?> setup(
@@ -66,7 +66,7 @@ class OptionsRoutingContext {
         mutex: Mutex? = null,
         path: String = property.name,
         returnOnLocked: Boolean = true,
-        serializer: KSerializer<T & Any> = (json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
+        serializer: KSerializer<T & Any> = (config.json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
@@ -75,7 +75,7 @@ class OptionsRoutingContext {
         property.isAccessible = true
         val delegate = (property as MutablePropertyReference0).getDelegate()!! as Option<T>
 
-        route(path) {
+        route.route(path) {
             val handler = OptionHandler(
                 property = property,
                 serializer = serializer,
@@ -99,19 +99,19 @@ class OptionsRoutingContext {
                 },
                 encodeToJsonElement = {
                     try {
-                        json.encodeToJsonElement(OptionValue.serializer(serializer), OptionValue(delegate.value))
+                        config.json.encodeToJsonElement(OptionValue.serializer(serializer), OptionValue(delegate.value))
                     } catch (e: SerializationException) {
                         throw IllegalStateException("Option '$path' can't be serialized", e)
                     }
                 },
                 verification = verification,
-                json = json
+                json = config.json
             )
 
             handler.register(path)
 
             get(docsGet) {
-                call.respond(json.encodeToJsonElement(
+                call.respond(config.json.encodeToJsonElement(
                     serializer = OptionValue.serializer(serializer),
                     value = handler.get() as OptionValue<T & Any>
                 ))

@@ -7,32 +7,22 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-context(Table)
-@JvmName("transformToZonedDateTimeNotNull")
-fun Column<LocalDateTime>.transformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) = transform(
-    wrap = { it.atZone(timeZoneId) },
-    unwrap = { it.withZoneSameInstant(timeZoneId).toLocalDateTime()  }
-)
+context(_: Table)
+fun Column<LocalDateTime>.transformToZonedDateTime(
+    timeZoneId: ZoneId = defaultTimeZone
+) = with(table) {
+    transform(
+        wrap = { it.atZone(timeZoneId) },
+        unwrap = { it.withZoneSameInstant(timeZoneId).toLocalDateTime()  }
+    )
+}
 
-context(Table)
-fun Column<LocalDateTime?>.transformToZonedDateTime(timeZoneId: ZoneId = defaultTimeZone) = transform(
-    wrap = { it?.atZone(timeZoneId) },
-    unwrap = { it?.withZoneSameInstant(timeZoneId)?.toLocalDateTime()  }
-)
-
-context(Table)
-@JvmName("transformToBigDecimalNotNull")
+context(_: Table)
 fun Column<Double>.transformToBigDecimal(
     scale: Int = 8, roundingMode: RoundingMode = RoundingMode.HALF_UP
-) = transform(
-    wrap = { it.toBigDecimal().setScale(scale, roundingMode) },
-    unwrap = { it.toDouble() }
-)
-
-context(Table)
-fun Column<Double?>.transformToBigDecimal(
-    scale: Int = 8, roundingMode: RoundingMode = RoundingMode.HALF_UP
-) = transform(
-    wrap = { it?.toBigDecimal()?.setScale(scale, roundingMode) },
-    unwrap = { it?.toDouble() }
-)
+) = with(table) {
+    transform(
+        wrap = { it.toBigDecimal().setScale(scale, roundingMode) },
+        unwrap = { it.toDouble() }
+    )
+}

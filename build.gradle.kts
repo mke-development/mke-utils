@@ -41,13 +41,6 @@ allprojects {
                 exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
             }
         }
-
-        withType<KotlinJvmCompile> {
-            compilerOptions {
-                freeCompilerArgs.add("-Xallow-holdsin-contract")
-                freeCompilerArgs.add("-Xallow-condition-implies-returns-contracts")
-            }
-        }
     }
 }
 

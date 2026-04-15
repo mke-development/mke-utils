@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
  *
  * @return Коллекция сущностей с предварительно загруженными связанными объектами
  * */
-context(Transaction)
+context(_: Transaction)
 @Suppress("UNCHECKED_CAST")
 fun <SRCID : Any, SRC : Entity<SRCID>, L : Iterable<Entity<SRCID>>> L.withEagerly(dtoClass: KClass<*>): L {
     val props = BaseDatabase.eagerCollector?.invoke(dtoClass)
@@ -49,7 +49,7 @@ fun <SRCID : Any, SRC : Entity<SRCID>, L : Iterable<Entity<SRCID>>> L.withEagerl
  *
  * @return Исходная сущность с предварительно загруженными связанными объектами
  * */
-context(Transaction)
+context(_: Transaction)
 fun <SRCID : Any, SRC : Entity<SRCID>> SRC.loadEagerly(dtoClass: KClass<*>): SRC {
     return this.apply {
         listOf(this).withEagerly(dtoClass)

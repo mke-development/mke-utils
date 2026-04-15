@@ -20,6 +20,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.orIfNotNull
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.EntityClass
+import org.jetbrains.exposed.v1.dao.entityCache
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import ru.raysmith.utils.endOfWord
@@ -103,7 +104,7 @@ private fun IColumnType<String>.length(table: Table, column: Column<*>) = when(t
  * @param block An optional block that will be applied to a query.
  * @return The entity that has this id value, or `null` if no entity was found.
  */
-context(Transaction)
+context(_: Transaction)
 inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrThrow(id: ID, message: String? = null, noinline block: (Query.() -> Query)? = null): T {
     val entity = if (table is TableWithValidExpression) {
         table.selectAll().where { table.id.eq(id) and (table as TableWithValidExpression).validQueryExpression() }
@@ -146,11 +147,11 @@ fun requireLength(length: Long, string: String, error: (symbols: String) -> Stri
     }
 }
 
-context(JdbcTransaction)
+context(tr: JdbcTransaction)
 fun <T> ignoreReferentialIntegrity(transaction: () -> T): T {
-    exec("SET REFERENTIAL_INTEGRITY FALSE")
+    tr.exec("SET REFERENTIAL_INTEGRITY FALSE")
     val res = transaction()
-    exec("SET REFERENTIAL_INTEGRITY TRUE")
+    tr.exec("SET REFERENTIAL_INTEGRITY TRUE")
     return res
 }
 
@@ -159,29 +160,29 @@ fun <ID : Any, T : Entity<ID>> T.toSizedCollection() = SizedCollection(this)
 infix fun <ID: Any, T : Entity<ID>> T?.eq(other: T?) = this != null && other != null && id == other.id
 infix fun <ID: Any, T : Entity<ID>> T?.neq(other: T?) = this == null || other == null || id != other.id
 
-context(Transaction)
+context(_: Transaction)
 fun EntityClass<*, *>.any(op: () -> Op<Boolean>): Boolean {
     return exists(op)
 }
 
-context(Transaction)
+context(_: Transaction)
 fun EntityClass<*, *>.none(op: () -> Op<Boolean>): Boolean {
     return !exists(op)
 }
 
-context(JdbcTransaction)
+context(_: JdbcTransaction)
 fun truncate(vararg tables: Table) = truncate(tables.toList())
 
-context(JdbcTransaction)
+context(_: JdbcTransaction)
 fun truncate(tables: List<Table>) {
     tables.forEach {
         it.truncate()
     }
 }
 
-context(JdbcTransaction)
+context(tr: JdbcTransaction)
 fun Table.truncate() {
-    exec("TRUNCATE TABLE $tableName")
+    tr.exec("TRUNCATE TABLE $tableName")
 }
 
 val Column<BigDecimal>.scale get() = (columnType as DecimalColumnType).scale
@@ -195,16 +196,19 @@ fun <ID : Any, T : Entity<ID>> SizedIterable<T>.deleteAll() = forEach { it.delet
 
 fun <T> ColumnSet.getFromAliasOrColumn(col: Column<T>) = if (this is Alias<*>) this[col] else col
 
-context(Transaction, Entity<*>)
+context(tr: Transaction, e: Entity<*>)
 @Suppress("USELESS_CAST", "UNCHECKED_CAST")
 fun <T> lookup(
     alias: Alias<IdTable<*>>?,
     col: Column<out T>, default: () -> T
-): T = alias?.getFromAliasOrColumn(col)?.lookup()
-    ?: writeValues[col as Column<out Any?>] as T
-    ?: readValues.getOrNull(col)
-    ?: default()
-
+): T {
+    return with(e) {
+        alias?.getFromAliasOrColumn(col)?.lookup()
+            ?: e.writeValues[col as Column<out Any?>] as T
+            ?: e.readValues.getOrNull(col)
+            ?: default()
+    }
+}
 inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrNull(id: ID): T? {
     val entity = if (this is NotDeletableEntityClass<ID, *>) {
         findById(id)?.letIf({ it.isDeleted() }) { null }

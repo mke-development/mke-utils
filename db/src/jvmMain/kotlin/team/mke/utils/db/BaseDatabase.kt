@@ -50,6 +50,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
 
     open val withLogs: Boolean = false
     open val createMigrationsFiles: Boolean = false
+    open val withAutoMigration: Boolean = true
 
     companion object {
         const val NO_MIGRATION = -1
@@ -73,7 +74,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     val connection: Database get() = _connection ?: error("Can't provide connection before call Database.connect()")
     private var _connection: Database? = null
 
-    context(JdbcTransaction)
+    context(_: JdbcTransaction)
     abstract fun migration(connection: Database, toVersion: Int)
 
     override fun init() {
@@ -173,7 +174,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         }
 
         val config = DatabaseConfig {
-            if (Environment.isDev()) {
+            if (!Environment.isProd()) {
                 defaultMaxAttempts = 1
             }
             config()
@@ -199,10 +200,12 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
                     }
                 }
 
-                createMissingTablesAndColumns()
-                addMissingColumnsStatements()
-                SchemaUtils.checkExcessiveIndices(*tables.toTypedArray(), withLogs = withLogs)
-                SchemaUtils.checkExcessiveForeignKeyConstraints(*tables.toTypedArray(), withLogs = withLogs)
+                if (withAutoMigration) {
+                    createMissingTablesAndColumns()
+                    addMissingColumnsStatements()
+                    SchemaUtils.checkExcessiveIndices(*tables.toTypedArray(), withLogs = withLogs)
+                    SchemaUtils.checkExcessiveForeignKeyConstraints(*tables.toTypedArray(), withLogs = withLogs)
+                }
             }
         }
     }

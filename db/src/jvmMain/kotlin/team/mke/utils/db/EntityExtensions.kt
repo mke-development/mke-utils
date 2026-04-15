@@ -44,24 +44,26 @@ inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<
     } as REF
 }
 
-context(E)
+context(e: E)
 inline fun <ID : Any, reified E : Entity<ID>, RID : Any, reified R : Entity<RID>> EntityClass<RID, R>.optionalReferencedOn(
     column: Column<EntityID<ID>?>,
     alias: Alias<IdTable<ID>>
 ): ReadWriteProperty<Any?, R?> {
-    val entity = this@E
+    val entity = e
 
     return object : ReadWriteProperty<Any?, R?> {
         val ref = optionalReferencedOn(column)
 
         override fun getValue(thisRef: Any?, property: KProperty<*>): R? {
-            return wrapRowOrDefault(alias) {
+            return e.wrapRowOrDefault(alias) {
                 ref.getValue(this, property)
             }
         }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: R?) {
-            ref.setValue(entity, property, value)
+            with(e) {
+                ref.setValue(entity, property, value)
+            }
         }
     }
 }

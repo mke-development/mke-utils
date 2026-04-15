@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.time.Duration
 
-context(E)
+context(e: E)
 fun <ID : Any, E : Entity<ID>, ENUM : Enum<ENUM>> staticEnumSetDelegate(
     relationshipTable: Table,
     entityClass: EntityClass<ID, E>,
@@ -24,7 +24,7 @@ fun <ID : Any, E : Entity<ID>, ENUM : Enum<ENUM>> staticEnumSetDelegate(
     entityColumn: Column<EntityID<ID>>? = null,
     enumColumn: Column<ENUM>? = null
 ) = object : StaticEnumSetDelegate<ID, E, ENUM>(
-    this@E,
+    e,
     relationshipTable,
     entityClass,
     enumClass,

@@ -51,6 +51,7 @@ abstract class BaseBackgroundProcess(
 
     fun start() = start(true)
     override fun start(throwOnRegistered: Boolean) {
+        Thread.currentThread().setName("bg")
         Background.registered(this, throwOnRegistered)
         synchronized(mutex) {
             isReadyToRestart = false

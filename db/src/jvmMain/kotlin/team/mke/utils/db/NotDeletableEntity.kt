@@ -31,7 +31,7 @@ abstract class NotDeletableEntity<T : Any>(id: EntityID<T>, table: NotDeletableT
 /** Represents table for [NotDeletableEntity] */
 abstract class NotDeletableTable<T : Any>(name: String = "") : IdTable<T>(name), TableWithValidExpression {
 
-    val dateDeleted = datetime("date_deleted"). nullable().index().transformToZonedDateTime()
+    val dateDeleted = datetime("date_deleted").transformToZonedDateTime().nullable().index()
 
     override fun validQueryExpression(): Op<Boolean> = dateDeleted.isNull()
 }

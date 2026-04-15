@@ -10,8 +10,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /** @sample team.mke.utils.serialization.test.LocalDateSerializerTests */
-object LocalDateSerializer : KSerializer<LocalDate> {
-    private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+open class LocalDateSerializer(val formatter: DateTimeFormatter) : KSerializer<LocalDate> {
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDate", PrimitiveKind.STRING)
 
@@ -22,4 +21,11 @@ object LocalDateSerializer : KSerializer<LocalDate> {
     override fun serialize(encoder: Encoder, value: LocalDate) {
         encoder.encodeString(formatter.format(value))
     }
+
+    object Factory {
+        fun create(formatter: DateTimeFormatter) = LocalDateSerializer(formatter)
+        fun create(format: String) = LocalDateSerializer(DateTimeFormatter.ofPattern(format))
+    }
+
+    companion object : LocalDateSerializer(DateTimeFormatter.ISO_LOCAL_DATE)
 }
