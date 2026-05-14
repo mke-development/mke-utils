@@ -7,5 +7,5 @@ Core utils:
 - [Environment](env/src/jvmMain/kotlin/team/mke/utils/env/Environment.kt)
 
  ## Environment
-- JDK 11
-- Kotlin 2.0
+- JDK 17+
+- Kotlin 2.3.21

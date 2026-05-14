@@ -13,7 +13,7 @@ val xml = XML {
     xmlDeclMode = XmlDeclMode.Charset
     xmlVersion = XmlVersion.XML10
     defaultPolicy {
-        if (Environment.isDev()) {
+        if (!Environment.isProd()) {
             indentString = "\t"
         }
         autoPolymorphic = true

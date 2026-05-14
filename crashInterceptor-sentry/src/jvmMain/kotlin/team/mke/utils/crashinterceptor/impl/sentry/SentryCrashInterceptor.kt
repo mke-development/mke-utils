@@ -44,7 +44,7 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
         Sentry.init { options ->
             options.dsn = this.config.dsn
             options.tracesSampleRate = 1.0
-            options.isDebug = Environment.Companion.isDev()
+            options.isDebug = !Environment.isProd()
             options.environment = env.name.lowercase()
             options.isEnableAutoSessionTracking = false
             options.isEnableUncaughtExceptionHandler = true
@@ -54,7 +54,7 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
                     logger.error(event.throwable!!.message, event.throwable!!)
                 }
 
-                if (Environment.Companion.isDev()) {
+                if (!Environment.isProd()) {
                     return@BeforeSendCallback null
                 }
 

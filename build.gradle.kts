@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "4.0.0"
+version = "4.0.0-rc1"
 
 allprojects {
     apply(plugin = "org.jetbrains.kotlinx.kover")

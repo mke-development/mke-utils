@@ -5,11 +5,11 @@ import io.kotest.matchers.shouldBe
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.utils.io.*
-import ru.raysmith.utils.uuid
 import team.mke.utils.ktor.ext.prepareFile
+import java.util.UUID
 
 class ExtensionsTests : FreeSpec({
-    val newName = uuid()
+    val newName = UUID.randomUUID().toString()
 
     fun partData(filename: String) = PartData.FileItem(
         provider = { ByteReadChannel.Empty },

@@ -20,7 +20,7 @@ class EnvironmentTests : FreeSpec({
 
     "Environment" {
         Environment.value shouldBe Environment.DEV
-        Environment.isDev() shouldBe true
+        Environment.isProd() shouldBe false
         env shouldBe Environment.DEV
     }
 
