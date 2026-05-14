@@ -7,6 +7,7 @@ exposed = "1.2.0"
 exposedOption = "4.0.2"
 javax-mail = "1.6.2"
 hikari = "7.0.2"
+icu4j = "78.3"
 kenerator = "2.7.0"
 kotest = "6.1.11"
 kotest-html-reporter = "0.8.2"
@@ -46,6 +47,7 @@ ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-openapi = { module = "io.ktor:ktor-server-openapi", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-serialization-kotlinx-xml = { module = "io.ktor:ktor-serialization-kotlinx-xml", version.ref = "ktor" }
 ktor-utils = { module = "io.ktor:ktor-utils", version.ref = "ktor" }
@@ -82,6 +84,7 @@ markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 swagger-models = { module = "io.swagger.core.v3:swagger-models", version.ref = "swagger" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations", version.ref = "swagger" }
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 
 # apache
 log4j-core = {module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }

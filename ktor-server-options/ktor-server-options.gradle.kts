@@ -18,6 +18,7 @@ kotlin {
 
                 api(libs.ktor.server.core)
                 api(libs.raysmith.exposedOption)
+                api(libs.kenerator.core)
                 implementation(libs.raysmith.utils)
             }
         }

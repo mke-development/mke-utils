@@ -12,7 +12,6 @@ kotlin {
         jvmMain {
             dependencies {
                 api(libs.ktor.server.core)
-                api(libs.raysmith.utils)
             }
         }
         jvmTest {

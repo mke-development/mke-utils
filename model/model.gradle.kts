@@ -12,7 +12,14 @@ kotlin {
                 implementation(libs.swagger.annotations)
                 implementation(libs.raysmith.utils)
                 implementation(libs.kenerator.core)
+                implementation(libs.ktor.server.openapi)
                 api(libs.ktor.http)
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation(libs.kotlin.reflect)
             }
         }
     }

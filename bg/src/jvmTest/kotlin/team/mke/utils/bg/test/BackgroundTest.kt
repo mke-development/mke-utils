@@ -5,7 +5,11 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import team.mke.utils.bg.Background
 import team.mke.utils.bg.bg
 import team.mke.utils.bg.bgWhile
@@ -126,5 +130,22 @@ class BackgroundTest : FreeSpec({
         shouldNotThrowAny {
             bg.cancelAndJoin()
         }
+    }
+
+    "background should inherit coroutine context" {
+        val expected = "bg-custom-name"
+        val coroutineName = CoroutineName(expected)
+        withContext(Dispatchers.Default + coroutineName) {
+            bg(crashInterceptor, "bg11", id = "11") {
+                coroutineContext[CoroutineName]?.name shouldBe expected
+            }.join()
+        }
+    }
+
+    "background thread name should be 'bg' by default" {
+        val expected = "bg12"
+        bg(crashInterceptor, expected, id = "12") {
+            Thread.currentThread().name shouldBe "bg"
+        }.join()
     }
 })

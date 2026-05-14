@@ -2,6 +2,7 @@ plugins {
     `convention-kmp`
 }
 
+// TODO split model to database and domain
 kotlin {
     sourceSets {
         commonMain {

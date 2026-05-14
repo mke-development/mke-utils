@@ -85,6 +85,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         if (isInit) return
         super.init()
 
+        setupEagerlyCollector()
         connect(data)
     }
 
@@ -125,8 +126,9 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     }
 
     /** Called after creation connection */
-    open fun onConnection(isTest: Boolean) {}
-    open fun beforeCreateTables() {}
+    protected open fun onConnection(isTest: Boolean) {}
+    protected open fun beforeCreateTables() {}
+    open fun setupEagerlyCollector() {}
 
     @OptIn(ExperimentalDatabaseMigrationApi::class)
     fun createMissingTablesAndColumns(vararg tables: Table = this.tables.toTypedArray()) {

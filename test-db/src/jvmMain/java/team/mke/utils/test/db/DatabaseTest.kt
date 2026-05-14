@@ -10,12 +10,15 @@ import org.jetbrains.exposed.v1.core.IColumnType
 import org.jetbrains.exposed.v1.core.SqlLogger
 import org.jetbrains.exposed.v1.core.StdOutSqlLogger
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import ru.raysmith.exposedoption.Options
+import team.mke.utils.db.BaseDatabase
 import team.mke.utils.db.ignoreReferentialIntegrity
 import team.mke.utils.db.truncate
 import team.mke.utils.io.disabledOutputStream
@@ -33,11 +36,14 @@ abstract class DatabaseTest(
 ) : FreeSpec() {
 
     private var connection: Database? = null
+    var enabledStepIds = true
 
     constructor(databaseKClass: KClass<*>, tables: List<Table>, body: DatabaseTest.() -> Unit = {}) :
             this(databaseKClass, tables, StdOutSqlLogger, body)
 
     val usedIds = mutableMapOf<IdTable<*>, MutableList<Any>>()
+
+    private var onConnect: context(Transaction) () -> Unit = {}
 
     private var afterDatabaseCleared: DatabaseTest.() -> Unit = {}
     fun afterDatabaseCleared(block: DatabaseTest.() -> Unit) {
@@ -52,38 +58,62 @@ abstract class DatabaseTest(
             else -> this
         }.toString()
 
-        @Suppress("UNCHECKED_CAST")
-        tables.filterIsInstance<IdTable<*>>().forEach {
-            it.id.defaultValueFun = {
-                var nextId: Any
-
-                while(true) {
-                    nextId = when(it.id.columnType.rawSqlType()) {
-                        "INT" -> {
-                            val lastId = usedIds[it]?.last() as Int? ?: 0
-                            Random.nextInt(lastId, lastId.plus(1000))
-                        }
-                        "LONG" -> {
-                            val lastId = usedIds[it]?.last() as Long? ?: 0L
-                            Random.nextLong(lastId, lastId.plus(1000))
-                        }
-                        else -> error("Unsupported IdTable type: ${it::class.simpleName}")
+        if (enabledStepIds) {
+            onConnect = {
+                @Suppress("UNCHECKED_CAST")
+                val testableTables = tables.filterIsInstance<IdTable<*>>()
+                    .toMutableList()
+                    .apply {
+                        remove<IdTable<*>>(Options)
                     }
 
-                    if (usedIds[it]?.contains(nextId) != true ) {
-                        usedIds.getOrPut(it) { mutableListOf() }
-                        usedIds[it]!!.add(nextId)
-                        break
+                testableTables.forEach {
+                    transaction {
+                        when(it.id.columnType.rawSqlType()) {
+                            "INT", "LONG" -> {
+                                val id = (testableTables.indexOf(it) + 1) * 1_000_000
+                                exec("ALTER TABLE ${it.tableName} ALTER COLUMN ${it.id.name} RESTART WITH $id")
+                                usedIds[it] = mutableListOf(id)
+                            }
+                            else -> error("Unsupported IdTable type: ${it::class.simpleName}")
+                        }
                     }
                 }
-
-                when(it.id.columnType.rawSqlType()) {
-                    "INT" -> EntityID(nextId as Int, it as IdTable<Int>)
-                    "LONG" -> EntityID(nextId as Long, it as IdTable<Long>)
-                    else -> error("Unsupported IdTable type: ${it::class.simpleName}")
-                }
-            } as (() -> Nothing)?
+            }
         }
+
+//        @Suppress("UNCHECKED_CAST")
+//        tables.filterIsInstance<IdTable<*>>().forEach {
+//            it.id.defaultValueFun = {
+//                var nextId: Any
+//
+//                while(true) {
+//                    nextId = when(it.id.columnType.rawSqlType()) {
+//                        "INT" -> {
+//                            val lastId = usedIds[it]?.last() as Int? ?: 0
+//                            Random.nextInt(lastId, lastId.plus(1000))
+//                        }
+//                        "LONG" -> {
+//                            val lastId = usedIds[it]?.last() as Long? ?: 0L
+//                            Random.nextLong(lastId, lastId.plus(1000))
+//                        }
+//                        else -> error("Unsupported IdTable type: ${it::class.simpleName}")
+//                    }
+//
+//                    if (usedIds[it]?.contains(nextId) != true ) {
+//                        usedIds.getOrPut(it) { mutableListOf() }
+//                        usedIds[it]!!.add(nextId)
+//                        break
+//                    }
+//                }
+//
+//                when(it.id.columnType.rawSqlType()) {
+//                    "INT" -> EntityID(nextId as Int, it as IdTable<Int>)
+//                    "LONG" -> EntityID(nextId as Long, it as IdTable<Long>)
+//                    else -> error("Unsupported IdTable type: ${it::class.simpleName}")
+//                }
+//            } as (() -> Nothing)?
+//        }
 
         afterTest { (test, result) ->
             System.setOut(disabledOutputStream)
@@ -124,7 +154,7 @@ abstract class DatabaseTest(
             withSystemProperties(mapOf("DB_USER" to "root", "DB_PASS" to "", "DB_NAME" to "test")) {
                 databaseKClass
                     .declaredFunctions
-                    .first { it.name == "setupEagerlyCollector" }
+                    .first { it.name == BaseDatabase::setupEagerlyCollector.name }
                     .call(databaseKClass.objectInstance)
             }
         }

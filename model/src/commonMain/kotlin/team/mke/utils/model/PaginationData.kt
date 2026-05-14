@@ -1,11 +1,8 @@
-package team.mke.utils.ktor.server.pagination
+package team.mke.utils.model
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @SerialName("PaginationData")
 data class PaginationData<T : Comparable<T>>(
@@ -17,9 +14,15 @@ data class PaginationData<T : Comparable<T>>(
 ) {
     init {
         if (lastSortedValue != null) {
-            if (lastEntity == null) {
-                throw MissingFieldException("lastEntity", "PaginationData")
+            require(lastEntity != null) {
+                "Both lastEntity and lastSortedValue must be provided together"
             }
         }
     }
+}
+
+@Serializable
+enum class Sort {
+    ASC,
+    DESC
 }

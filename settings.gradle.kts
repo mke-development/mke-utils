@@ -41,6 +41,7 @@ include("model")
 include("model-json")
 include("test-db")
 include("locale")
+include("i18n")
 
 rootProject.children.forEach {
     it.buildFileName = it.name + ".gradle.kts"

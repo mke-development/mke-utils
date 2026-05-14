@@ -6,7 +6,10 @@ kotlin {
     sourceSets {
         jvmMain {
             dependencies {
-                api(libs.ktor.server.core)
+                implementation(projects.env)
+                implementation(projects.model)
+                implementation(libs.ktor.server.core)
+                implementation(libs.raysmith.utils)
             }
         }
     }

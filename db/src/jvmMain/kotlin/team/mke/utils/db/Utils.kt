@@ -286,3 +286,8 @@ fun Op<Boolean>?.orIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
 fun Op<Boolean>?.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean>? {
     return if (condition) and(op) else this
 }
+
+context(tr: JdbcTransaction)
+private fun Iterable<String>.execAll() {
+    forEach { tr.exec(it) }
+}
