@@ -17,10 +17,10 @@ import org.jetbrains.exposed.v1.core.andIfNotNull
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.core.orIfNotNull
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.EntityClass
-import org.jetbrains.exposed.v1.dao.entityCache
 import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import ru.raysmith.utils.endOfWord
@@ -44,7 +44,6 @@ fun <ID : Any> ID.toEntityID(table: IdTable<ID>) = EntityID(this, table)
 fun <T> Query.andWhereIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>?): Query {
     contract {
         (value != null) holdsIn expression
-        (value != null) implies returnsNotNull()
     }
 
     if (value != null) {
@@ -59,7 +58,6 @@ fun <T> Query.andWhereIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>?
 fun <T> Query.andHavingIfNotNull(value: T?, expression: Query.(T) -> Op<Boolean>?): Query {
     contract {
         (value != null) holdsIn expression
-        (value != null) implies returnsNotNull()
     }
 
     if (value != null) {
@@ -81,6 +79,20 @@ fun Op<Boolean>.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean> {
     }
 
     return if (condition) this and op() else this
+}
+
+fun Op<Boolean>.orIf(condition: Boolean, op: Expression<Boolean>?): Op<Boolean> {
+    return if (condition) orIfNotNull(op) else this
+}
+
+@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
+fun Op<Boolean>.orIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean> {
+    contract {
+        callsInPlace(op, InvocationKind.AT_MOST_ONCE)
+        condition holdsIn op
+    }
+
+    return if (condition) this or op() else this
 }
 
 fun ResultRow.hasValues(c: List<Column<*>>) = c.all { this.hasValue(it) }
@@ -148,10 +160,17 @@ fun requireLength(length: Long, string: String, error: (symbols: String) -> Stri
 }
 
 context(tr: JdbcTransaction)
-fun <T> ignoreReferentialIntegrity(transaction: () -> T): T {
-    tr.exec("SET REFERENTIAL_INTEGRITY FALSE")
+fun <T> ignoreReferentialIntegrityMySQL(transaction: () -> T): T {
+    tr.exec("SET REFERENTIAL_INTEGRITY FALSE;")
     val res = transaction()
-    tr.exec("SET REFERENTIAL_INTEGRITY TRUE")
+    tr.exec("SET REFERENTIAL_INTEGRITY TRUE;")
+    return res
+}
+context(tr: JdbcTransaction)
+fun <T> ignoreReferentialIntegrityMariaDB(transaction: () -> T): T {
+    tr.exec("SET @@foreign_key_checks = 0;")
+    val res = transaction()
+    tr.exec("SET @@foreign_key_checks = 1;")
     return res
 }
 
@@ -229,6 +248,36 @@ fun Op<Boolean>?.and(op: () -> Op<Boolean>): Op<Boolean> {
     }
 }
 
+@JvmName("andNullable")
+fun Op<Boolean>?.and(op: () -> Op<Boolean>?): Op<Boolean>? {
+    val opResult = op()
+
+    return when {
+        this != null && opResult != null -> this and opResult
+        opResult != null -> opResult
+        else -> this
+    }
+}
+
+fun Op<Boolean>?.or(op: () -> Op<Boolean>): Op<Boolean> {
+    return if (this != null) {
+        this or op()
+    } else {
+        op()
+    }
+}
+
+@JvmName("orNullable")
+fun Op<Boolean>?.or(op: () -> Op<Boolean>?): Op<Boolean>? {
+    val opResult = op()
+
+    return when {
+        this != null && opResult != null -> this or opResult
+        opResult != null -> opResult
+        else -> this
+    }
+}
+
 @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
 @JvmName("andIfNotNullNullable")
 fun <T> Op<Boolean>?.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>? {
@@ -247,10 +296,6 @@ fun <T> Op<Boolean>?.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolea
 
 @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
 fun <T> Op<Boolean>.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
-    contract {
-        (value != null) implies returnsNotNull()
-    }
-
     return if (value != null) {
         this andIfNotNull op(value)
     }else {
@@ -266,7 +311,7 @@ fun Op<Boolean>?.andIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
     }
 }
 
-fun <T> Op<Boolean>.orIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>? {
+fun <T> Op<Boolean>.orIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
     return if (value != null) {
         this.orIfNotNull(op(value))
     } else {
@@ -283,11 +328,24 @@ fun Op<Boolean>?.orIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
 }
 
 @JvmName("andIfNullable")
-fun Op<Boolean>?.andIf(condition: Boolean, op: () -> Op<Boolean>): Op<Boolean>? {
+fun Op<Boolean>?.andIf(condition: Boolean, op: () -> Op<Boolean>?): Op<Boolean>? {
     return if (condition) and(op) else this
 }
 
+@JvmName("orIfNullable")
+fun Op<Boolean>?.orIf(condition: Boolean, op: () -> Op<Boolean>?): Op<Boolean>? {
+    return if (condition) or(op) else this
+}
+
 context(tr: JdbcTransaction)
-private fun Iterable<String>.execAll() {
+fun Iterable<String>.execAll() {
     forEach { tr.exec(it) }
 }
+
+inline infix fun <reified T : Any> EntityID<T>?.eq(other: T?) = this?.value == other
+inline infix fun <reified T : Any> T?.eq(other: EntityID<T>?) = this == other?.value
+inline infix fun <reified T : Any> EntityID<T>?.eq(other: EntityID<T>?) = this == other
+
+inline infix fun <reified T : Any> EntityID<T>?.nEq(other: T?) = this?.value != other
+inline infix fun <reified T : Any> T?.nEq(other: EntityID<T>?) = this != other?.value
+inline infix fun <reified T : Any> EntityID<T>?.nEq(other: EntityID<T>?) = this != other

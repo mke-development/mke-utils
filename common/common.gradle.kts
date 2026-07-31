@@ -1,4 +1,5 @@
 plugins {
+    `convention-kmp`
     `convention-kmp-js`
 }
 
@@ -6,9 +7,8 @@ kotlin {
     sourceSets {
         commonTest {
             dependencies {
-                implementation(kotlin("test"))
-//                implementation(libs.kotest.framework.engine)
-//                implementation(libs.kotest.assertions.core)
+                implementation(libs.kotest.framework.engine)
+                implementation(libs.kotest.assertions.core)
             }
         }
 

@@ -87,7 +87,7 @@ suspend inline fun <reified DTO : Any> ApplicationCall.receiveMultipart(
             is PartData.BinaryItem -> {}
         }
 
-        part.dispose()
+        part.release()
     }
 
     val dto = buildJsonObject {

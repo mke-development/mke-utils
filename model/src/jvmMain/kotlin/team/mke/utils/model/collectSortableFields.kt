@@ -12,7 +12,13 @@ fun KClass<*>.collectSortableFields(): List<String> {
                 (s.returnType.classifier as KClass<*>).collectSortableFields().forEach {
                     result.add("${s.name}.$it")
                 }
-            } else if (s.hasAnnotation<Sortable>()) {
+            }
+            else if (s.returnType.classifier == List::class) {
+                (s.returnType.arguments.first().type?.classifier as? KClass<*>)?.collectSortableFields()?.forEach {
+                    result.add("${s.name}.$it")
+                }
+            }
+            else if (s.hasAnnotation<Sortable>()) {
                 result.add(s.name)
             }
         }

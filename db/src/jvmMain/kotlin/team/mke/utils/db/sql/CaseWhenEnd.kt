@@ -7,6 +7,11 @@ import org.jetbrains.exposed.v1.core.IColumnType
 import org.jetbrains.exposed.v1.core.QueryBuilder
 import org.jetbrains.exposed.v1.core.append
 
+/**
+ * Класс, представляющий собой завершение конструкции `CASE WHEN` в SQL.
+ *
+ * @see [End]
+ * */
 class CaseWhenEnd<T>(
     /** The conditions to check and their results if met. */
     val caseWhen: CaseWhen<T>
@@ -33,4 +38,7 @@ class CaseWhenEnd<T>(
     }
 }
 
+/**
+ * Завершает конструкцию `CASE WHEN` с `END`.
+ * */
 fun <T> CaseWhen<T>.End() = CaseWhenEnd(this)

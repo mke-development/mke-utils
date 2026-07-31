@@ -7,7 +7,6 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.util.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -15,7 +14,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.slf4j.Logger
 import ru.raysmith.utils.letIf
 import team.mke.utils.crashinterceptor.CrashInterceptor
-import team.mke.utils.ktor.server.options.OptionsRoutingContext.Companion.sets
 import team.mke.utils.ktor.openapi.OpenApiRouteBlock
 import team.mke.utils.ktor.openapi.notFound
 import team.mke.utils.ktor.openapi.ok
@@ -62,10 +60,7 @@ class OptionsPluginConfiguration {
     var putDocsSetup: RouteConfig.() -> Unit = {}
     val putDocs: OpenApiRouteBlock = {
         description = buildString {
-            append("Устанавливает настройки. Допускает только следующие списки:")
-            sets.keys.forEach { options ->
-                append(options.joinToString("`, `", prefix = "\n- `", postfix = "`\n"))
-            }
+            append("Устанавливает настройки.")
         }
         tags(OptionTag)
 
@@ -101,8 +96,9 @@ class OptionsPluginConfiguration {
     }
 }
 
-fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit) {
+fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit = {}) {
     val config = OptionsPluginConfiguration().apply(configuration)
+    check(config.crashInterceptor != null) { "CrashInterceptor should be provided" }
 
     route(config.path) {
         fun RoutingContext.errorDTO(key: String, method: HttpMethod) = ErrorDTO(
@@ -115,7 +111,7 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit)
         config.configuration.invoke(config, this, context)
 
         get(config.getDocs) {
-            val keys = call.parameters.getOrFail("keys").split(",")
+            val keys = call.parameters.getAll("keys") ?: emptyList()
 
             call.respond(
                 JsonObject(
@@ -143,39 +139,32 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit)
                 }
             }.toMap()
 
-            val set = sets.entries.find {
-                it.key.size == options.size && it.key.all { property -> options.containsKey(property) }
-            }
-
-
-            check(set != null) {
-                "Options set not found: ${options.keys.joinToString(",")}"
-            }
-
-            val sortedOptions = set.key.associateWith { property -> options[property] }
-
             val rollbackData = options.map { (key, _) ->
                 key to OptionHandler.registered[key]!!.get().value
             }.toMap()
 
             try {
+                val updated = mutableMapOf<String, Any?>()
+
                 val result = JsonObject(
-                    sortedOptions.map { (key, newValue) ->
+                    options.map { (key, newValue) ->
                         OptionHandler.registered[key]!!.let { handler ->
-                            handler.setValue(newValue, shouldBeVerified = false)
+                            if (handler.setValue(newValue, shouldBeVerified = true)) {
+                                updated[key] = newValue
+                            }
                             key to handler.encodeToJsonElement()
                         }
                     }.toMap()
                 )
 
-                if (set.value != null) {
-                    set.value!!.invoke()
-                } else {
-                    sortedOptions.forEach { (key, newValue) ->
-                        object : Verification<Any?> {
-                            override val previousValue: Any? = rollbackData[key]
-                        }.apply {
-                            OptionHandler.registered[key]!!.verification.invoke(this, newValue)
+                safe(config.crashInterceptor!!, config.logger ?: environment.log) {
+                    val updates = mutableListOf<suspend (newValue: Any?) -> Unit>()
+                    updated.forEach { (key, newValue) ->
+                        OptionHandler.registered[key]?.let { handler ->
+                            if (handler.onUpdate !in updates) {
+                                updates.add(handler.onUpdate)
+                                handler.onUpdate(newValue)
+                            }
                         }
                     }
                 }

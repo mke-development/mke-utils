@@ -49,17 +49,17 @@ abstract class BaseBackgroundProcess(
     }
     suspend fun cancelAndJoin() { job?.cancelAndJoin() }
 
-    fun start() = start(true)
-    override fun start(throwOnRegistered: Boolean) {
+    fun start(force: Boolean = false) = start(true, force)
+    override fun start(throwOnRegistered: Boolean, force: Boolean) {
         Thread.currentThread().setName("bg")
+        logger.debug("Background process '$name' [$id] started...")
         Background.registered(this, throwOnRegistered)
         synchronized(mutex) {
             isReadyToRestart = false
         }
-        logger.debug("Background process '$name' [$id] started...")
         job = Background.scope.launch(handler + coroutineName) {
             try {
-                run()
+                run(force)
                 logger.debug("Background process '$name' [$id] completed")
             } catch (e: Exception) {
                 crashInterceptor.intercept(e, logger, "Не удалось запустить фоновый процесс '$name' [$id]")
@@ -76,11 +76,11 @@ abstract class BaseBackgroundProcess(
         }
     }
 
-    override fun restart() = synchronized(mutex) {
+    override fun restart(force: Boolean) = synchronized(mutex) {
         if (isReadyToRestart) {
             isReadyToRestart = false
             restartOnFinish = false
-            super.restart()
+            super.restart(force)
             return@synchronized true
         } else {
             restartOnFinish = true

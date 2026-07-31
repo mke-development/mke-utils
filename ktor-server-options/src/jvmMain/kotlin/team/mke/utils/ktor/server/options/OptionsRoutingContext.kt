@@ -26,19 +26,6 @@ import kotlin.reflect.KMutableProperty
 import kotlin.reflect.jvm.isAccessible
 
 class OptionsRoutingContext {
-    companion object {
-        internal val sets = mutableMapOf<Set<String>, (() -> Unit)?>()
-    }
-
-    context(_: OptionsRoutingContext)
-    fun registerSet(vararg properties: KMutableProperty<*>, verification: (() -> Unit)? = null) {
-        sets[properties.map { it.name }.toSet()] = verification
-    }
-
-    context(_: OptionsRoutingContext)
-    fun registerSet(vararg properties: String, verification: (() -> Unit)? = null) {
-        sets[properties.toSet()] = verification
-    }
 
     context(_: Route, config: OptionsPluginConfiguration)
     @OptIn(ExperimentalSerializationApi::class)
@@ -52,8 +39,9 @@ class OptionsRoutingContext {
         serializer: KSerializer<T & Any> = (config.json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
+        noinline onUpdate: suspend (newValue: T) -> Unit = {},
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
-    ) = setup(property, docs.Get, docs.Put, docs.Test, mutex, path, returnOnLocked, serializer, test, verification)
+    ) = setup(property, docs.Get, docs.Put, docs.Test, mutex, path, returnOnLocked, serializer, test, onUpdate, verification)
 
     context(route: Route, config: OptionsPluginConfiguration)
     @OptIn(ExperimentalSerializationApi::class)
@@ -69,6 +57,7 @@ class OptionsRoutingContext {
         serializer: KSerializer<T & Any> = (config.json.serializersModule.serializerOrNull(typeInfo<T>().reifiedType)
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
+        noinline onUpdate: suspend (newValue: T) -> Unit = {},
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
     ) {
 
@@ -85,6 +74,8 @@ class OptionsRoutingContext {
                 },
                 edit = { newValue, shouldBeVerified ->
                     val previousValue = delegate.value
+
+                    if (previousValue == newValue) return@OptionHandler false
                     try {
                         delegate.set(newValue)
                         if (shouldBeVerified) {
@@ -92,6 +83,7 @@ class OptionsRoutingContext {
                                 verification(newValue)
                             }
                         }
+                        return@OptionHandler true
                     } catch (e: Exception) {
                         delegate.set(previousValue)
                         throw e
@@ -104,6 +96,7 @@ class OptionsRoutingContext {
                         throw IllegalStateException("Option '$path' can't be serialized", e)
                     }
                 },
+                onUpdate = onUpdate,
                 verification = verification,
                 json = config.json
             )
@@ -139,11 +132,21 @@ class OptionsRoutingContext {
 
                 if (handler.mutex != null) {
                     handler.mutex.withLock {
-                        handler.edit(newValue(), true)
+                        val newValue = newValue()
+                        val updated = handler.edit(newValue, true)
+                        if (updated) {
+                            handler.onUpdate(newValue)
+                        }
+
                         call.respond(HttpStatusCode.OK)
                     }
                 } else {
-                    handler.edit(newValue(), true)
+                    val newValue = newValue()
+                    val updated = handler.edit(newValue, true)
+                    if (updated) {
+                        handler.onUpdate(newValue)
+                    }
+
                     call.respond(HttpStatusCode.OK)
                 }
             }
@@ -152,6 +155,7 @@ class OptionsRoutingContext {
                 post("/test", docsTest ?: {}) {
                     val body = call.receiveNullable<T>()
                     test(body)
+                    call.respond(HttpStatusCode.OK)
                 }
             }
         }

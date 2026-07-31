@@ -5,6 +5,7 @@ import io.sentry.Sentry
 import io.sentry.SentryLevel
 import io.sentry.SentryOptions
 import org.slf4j.Logger
+import org.slf4j.MDC
 import team.mke.utils.env.Environment
 import team.mke.utils.env.env
 import java.net.SocketException
@@ -15,22 +16,71 @@ import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.crashinterceptor.CrashInterceptorConfig
 import java.util.UUID
 
+/**
+ * Implementation of [CrashInterceptor] using Sentry.
+ *
+ * This interceptor initializes Sentry with the provided DSN and configuration options, and intercepts crashes by
+ * sending them to Sentry.
+ * It also allows you to specify a blacklist of exception classes that should not be sent to Sentry, and to add custom
+ * tags to the Sentry events.
+ *
+ * This interceptor puts a unique log ID (`log_id`) in the MDC for each intercepted error and message
+ *
+ * Note: By default, [CancellationException], [SocketTimeoutException] and [SocketException] are included in the
+ * blacklist, as they often indicate network issues rather than application errors. You can remove them from the
+ * blacklist with the [clearBlackList][SentryCrashInterceptor.Config.clearBlackList] method if you want to track these
+ * exceptions in Sentry.
+ *
+ * Note: Make sure to set the environment to `prod` for your application to enable interceptors
+ *
+ * Example usage:
+ * ```
+ * val crashInterceptor = SentryCrashInterceptor()
+ * crashInterceptor.init(logger) {
+ *     dsn = "your-sentry-dsn"
+ *     blackList(CancellationException::class, SocketException::class, SocketTimeoutException::class)
+ *     options {
+ *         // Additional Sentry options configuration
+ *     }
+ * }
+ * ```
+ * */
 object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> {
 
     class Config : CrashInterceptorConfig {
 
+        /**
+         * Sentry DSN (Data Source Name).
+         * */
         var dsn: String? = null
 
-        private val _blackList: MutableSet<KClass<out Exception>> = mutableSetOf(SocketTimeoutException::class, SocketException::class)
+        private val _blackList: MutableSet<KClass<out Exception>> = mutableSetOf(
+            CancellationException::class, SocketTimeoutException::class, SocketException::class
+        )
         val blackList: Set<KClass<out Exception>>
             get () = _blackList
 
 
+        /**
+         * Add exception classes to the blacklist. Exceptions of these classes will not be sent to Sentry.
+         * */
         fun blackList(vararg classes: KClass<out Exception>) {
             this._blackList.addAll(classes)
         }
 
+        /**
+         * Clear the blacklist, allowing all exceptions to be sent to Sentry.
+         * */
+        fun clearBlackList() {
+            _blackList.clear()
+        }
+
         internal var options: SentryOptions.() -> Unit = {}
+
+        /**
+         * Additional Sentry options configuration.
+         * This block will be executed after the default options are set, allowing you to override them if necessary.
+         * */
         fun options(block: SentryOptions.() -> Unit) {
             options = block
         }
@@ -54,15 +104,7 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
                     logger.error(event.throwable!!.message, event.throwable!!)
                 }
 
-                if (!Environment.isProd()) {
-                    return@BeforeSendCallback null
-                }
-
                 if (event.throwable != null && event.throwable!!::class in this.config.blackList) {
-                    return@BeforeSendCallback null
-                }
-
-                if (event.throwable is CancellationException) {
                     return@BeforeSendCallback null
                 }
 
@@ -82,7 +124,9 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
 
             val logId = UUID.randomUUID().toString()
             setTag("log_id", logId)
-            val message = "[$logId] ${message ?: e.message} (${tags ?: "[]"})"
+            val message = "${message ?: e.message} (${tags ?: "[]"})"
+
+            MDC.put("log_id", logId)
             if (printStackTrace) {
                 logger.error(message, e)
             } else {
@@ -104,11 +148,17 @@ object SentryCrashInterceptor : CrashInterceptor<SentryCrashInterceptor.Config> 
     override fun message(message: String, logger: Logger, tags: Map<String, Any?>?) {
         Sentry.captureMessage(message, SentryLevel.WARNING) { scope ->
             scope.clear()
+
             tags?.forEach { (k, v) ->
                 scope.setTag(k, v.toString())
             }
 
-            logger.warn("$message (${tags ?: "[]"})")
+            val logId = UUID.randomUUID().toString()
+            scope.setTag("log_id", logId)
+            val message = "$message (${tags ?: "[]"})"
+
+            MDC.put("log_id", logId)
+            logger.warn(message)
         }
     }
 }

@@ -14,8 +14,9 @@ data class OptionHandler<T : Any?>(
     val mutex: Mutex?,
     val json: Json,
     val get: suspend () -> OptionValue<T>,
-    val edit: suspend (newValue: T, shouldBeVerified: Boolean) -> Unit,
+    val edit: suspend (newValue: T, shouldBeVerified: Boolean) -> Boolean,
     val encodeToJsonElement: suspend () -> JsonElement,
+    val onUpdate: suspend (newValue: T) -> Unit,
     val verification: Verification<T>.(newValue: T) -> Unit
 ) {
     companion object {
@@ -23,8 +24,8 @@ data class OptionHandler<T : Any?>(
     }
 
     fun decodeFromJsonElement(element: JsonElement) = json.decodeFromJsonElement(serializer, element)
-    suspend fun setValue(newValue: Any?, shouldBeVerified: Boolean) {
-        edit(newValue as T, shouldBeVerified)
+    suspend fun setValue(newValue: Any?, shouldBeVerified: Boolean): Boolean {
+        return edit(newValue as T, shouldBeVerified)
     }
 
     fun register(path: String = property.name) {

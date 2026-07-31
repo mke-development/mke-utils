@@ -17,25 +17,20 @@ import org.slf4j.LoggerFactory
 import ru.raysmith.exposedoption.Options
 import ru.raysmith.utils.ms
 import ru.raysmith.utils.nowZoned
-import ru.raysmith.utils.outcome
 import ru.raysmith.utils.properties.PropertiesFactory
-import team.mke.utils.InitiableWithArgs
-import team.mke.utils.Versionable
 import team.mke.utils.db.eager.Prop
 import team.mke.utils.env.Environment
 import team.mke.utils.env.env
 import team.mke.utils.env.envRequired
 import java.io.File
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
 
-@Deprecated("Use utf8mb4_unicode_520_ci instead", ReplaceWith("Collation.utf8mb4_unicode_520_ci"))
+@Deprecated("Use utf8mb4_uca1400_ai_ci instead", ReplaceWith("Collation.utf8mb4_uca1400_ai_ci"))
 const val COLLATE_UTF8MB4_UNICODE_CI = "utf8mb4_unicode_ci"
 
-// TODO readme
 private val dbUser by envRequired("DB_USER")
 private val dbPass by envRequired("DB_PASS")
 private val dbName by envRequired("DB_NAME")
@@ -46,16 +41,20 @@ private val dbSchema by env("DB_SCHEMA", "jdbc:mysql")
 
 // TODO docs; example
 @Suppress("SqlNoDataSourceInspection")
-abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
+abstract class BaseDatabase {
 
     open val withLogs: Boolean = false
     open val createMigrationsFiles: Boolean = false
     open val withAutoMigration: Boolean = true
 
+    var isInit = false
+        private set
+
+    protected open var version = 1
+
     companion object {
         const val NO_MIGRATION = -1
         val logger = LoggerFactory.getLogger("database")!!
-
         private val eagerCollectorCache = Collections.synchronizedMap<KClass<*>, Array<Prop>>(mutableMapOf())
         private var eagerCollectorCacheEnabled: Boolean = true
 
@@ -64,9 +63,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     }
 
     private var properties: Properties? = null
-    val timeZone by lazy { ZoneId.of(properties?.get("serverTimezone")?.toString() ?: "UTC") }
 
-    private val isTest = dbHost.contains(":h2") // TODO better way to detect test environment
     open val tables: List<Table> by lazy {
         collectAllTables(this::class.java.packageName)
     }
@@ -74,19 +71,23 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
     val connection: Database get() = _connection ?: error("Can't provide connection before call Database.connect()")
     private var _connection: Database? = null
 
-    context(_: JdbcTransaction)
+    context(tr: JdbcTransaction)
     abstract fun migration(connection: Database, toVersion: Int)
 
-    override fun init() {
-        init("db.properties")
+    fun init() = init("db.properties")
+
+    fun init(propertiesResourceFilePath: String) {
+        if (isInit) return
+
+        return init(PropertiesFactory.from(propertiesResourceFilePath))
     }
 
-    override fun init(data: String?) {
+    fun init(properties: Properties) {
         if (isInit) return
-        super.init()
 
+        this.properties = properties
         setupEagerlyCollector()
-        connect(data)
+        connect()
     }
 
     private var config: DatabaseConfig.Builder.() -> Unit = {}
@@ -99,11 +100,11 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         hikari = setup
     }
 
-    fun connect(dbProperties: String? = "db.properties") {
+    fun connect() {
         try {
-            _connection = initConnection(dbProperties).also {
+            _connection = initConnection().also {
                 transaction {
-                    onConnection(isTest)
+                    onConnection()
                 }
             }
         } catch (e: Exception) {
@@ -118,15 +119,14 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
             TransactionManager.closeAndUnregister(it)
             it.connector().close()
         }
-        super.close()
     }
 
-    override fun close() {
+    open fun close() {
         disconnect()
     }
 
     /** Called after creation connection */
-    protected open fun onConnection(isTest: Boolean) {}
+    protected open fun onConnection() {}
     protected open fun beforeCreateTables() {}
     open fun setupEagerlyCollector() {}
 
@@ -167,8 +167,8 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         return SchemaUtils.addMissingColumnsStatements(*tables, withLogs = withLogs)
     }
 
-    protected fun initConnection(dbProperties: String? = "db.properties"): Database {
-        Database.connect(hikari(dbProperties, useDatabase = withLogs)).also {
+    protected fun initConnection(): Database {
+        Database.connect(hikari(useDatabase = false)).also {
             transaction {
                 SchemaUtils.createDatabase(dbName)
             }
@@ -182,7 +182,7 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
             config()
         }
 
-        return Database.connect(hikari(dbProperties), databaseConfig = config).also {
+        return Database.connect(hikari(), databaseConfig = config).also {
             transaction(it) {
                 beforeCreateTables()
                 SchemaUtils.create(Options)
@@ -212,20 +212,18 @@ abstract class BaseDatabase : InitiableWithArgs<String?>(), Versionable {
         }
     }
 
-    private fun hikari(dbProperties: String? = null, useDatabase: Boolean = true): HikariDataSource {
-        properties = dbProperties?.let { PropertiesFactory.from(it) }
-
+    private fun hikari(useDatabase: Boolean = true): HikariDataSource {
         val baseUrl = dbHost + (dbPort?.let { ":$it" } ?: "")
-        val jdbc = if (isTest) {
-            dbHost
-        } else {
-            val builder = StringBuilder("$dbSchema://$baseUrl${useDatabase.outcome("/$dbName", "")}?")
-
-            properties?.forEach { (key, value) ->
-                builder.append("$key=$value&")
+        val jdbc = buildString {
+            append(dbSchema).append("://").append(baseUrl)
+            if (useDatabase) {
+                append("/$dbName")
             }
-            builder.dropLast(1).toString()
-        }
+            append("?")
+            properties?.forEach { (key, value) ->
+                append("$key=$value&")
+            }
+        }.dropLast(1)
 
         val config = HikariConfig().apply {
             driverClassName = dbDriver

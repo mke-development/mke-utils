@@ -9,66 +9,65 @@ import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.EntityClass
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import ru.raysmith.utils.Cacheable
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.time.Duration
 
 context(e: E)
-fun <ID : Any, E : Entity<ID>, ENUM : Enum<ENUM>> staticEnumSetDelegate(
+inline fun <ID : Any, E : Entity<ID>, reified ENUM : Enum<ENUM>> staticEnumSetDelegate(
     relationshipTable: Table,
-    entityClass: EntityClass<ID, E>,
-    enumClass: KClass<ENUM>,
     entityColumn: Column<EntityID<ID>>? = null,
     enumColumn: Column<ENUM>? = null
-) = object : StaticEnumSetDelegate<ID, E, ENUM>(
+) = StaticEnumSetDelegate(
     e,
     relationshipTable,
-    entityClass,
-    enumClass,
+    ENUM::class,
     entityColumn,
     enumColumn
-) {}
+)
 
 @Suppress("UNCHECKED_CAST")
-abstract class StaticEnumSetDelegate<ID : Any, E : Entity<ID>, ENUM : Enum<ENUM>>(
+class StaticEnumSetDelegate<ID : Any, E : Entity<ID>, ENUM : Enum<ENUM>>(
     val entity: E,
     val relationshipTable: Table,
-    val entityClass: EntityClass<ID, E>,
     val enumClass: KClass<ENUM>,
     val entityColumn: Column<EntityID<ID>>? = null,
     val enumColumn: Column<ENUM>? = null
 ) : ReadWriteProperty<E, Set<ENUM>> {
 
     private val _entityColumn: Column<EntityID<ID>> by lazy {
-        (entityColumn
-            ?: relationshipTable.columns.find { it.referee?.table == entityClass.table }
-            ?: error("Cannot find entity column in relationship table ${relationshipTable.tableName}"))
-        as Column<EntityID<ID>>
+        entityColumn
+            ?: relationshipTable.columns.find { it.referee?.table == (entity.klass as EntityClass<ID, E>).table }
+                    as? Column<EntityID<ID>>
+            ?: error("Cannot find entity column in relationship table ${relationshipTable.tableName}")
     }
 
     private val _enumColumn: Column<ENUM> by lazy {
-        (enumColumn
+        enumColumn
             ?: relationshipTable.columns.find { (it.columnType as? EnumerationColumnType<*>)?.klass == enumClass }
-            ?: error("Cannot find enum column in relationship table ${relationshipTable.tableName}"))
-        as Column<ENUM>
+                    as? Column<ENUM>
+            ?: error("Cannot find enum column in relationship table ${relationshipTable.tableName}")
     }
 
+    private var cache: Set<ENUM>? = null
 
-    private var cache by Cacheable(Duration.INFINITE) {
-        relationshipTable.selectAll()
-            .where { _entityColumn.eq(entity.id) }
-            .map {
-                it[_enumColumn]
-            }
-            .toSet()
+    override fun getValue(thisRef: E, property: KProperty<*>): Set<ENUM> {
+
+        if (cache == null) {
+            cache = relationshipTable.select(_enumColumn)
+                .where { _entityColumn.eq(entity.id) }
+                .map { it[_enumColumn] }
+                .toSet()
+        }
+
+        return cache!!
     }
-
-    override fun getValue(thisRef: E, property: KProperty<*>): Set<ENUM> = cache
 
     override fun setValue(thisRef: E, property: KProperty<*>, value: Set<ENUM>) {
+        TransactionManager.current() // ensure we're in a transaction
+
         relationshipTable.deleteWhere {
             _entityColumn.eq(entity.id)
         }

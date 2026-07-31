@@ -9,6 +9,7 @@ kotlin {
                 api(projects.model)
             }
         }
+
         jvmMain {
             dependencies {
                 api(projects.ktorOpenapi)
@@ -20,6 +21,18 @@ kotlin {
                 api(libs.raysmith.exposedOption)
                 api(libs.kenerator.core)
                 implementation(libs.raysmith.utils)
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation(projects.testDb)
+                implementation(projects.db)
+                implementation(libs.kotest)
+                implementation(libs.ktor.server.test.host)
+                implementation(libs.ktor.client.contentNegotiation)
+                implementation(libs.ktor.server.contentNegotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
             }
         }
     }

@@ -3,17 +3,17 @@ package team.mke.utils.io.validator
 import org.apache.commons.imaging.ImageInfo
 import org.apache.commons.imaging.Imaging
 import org.apache.tika.Tika
-import org.apache.tika.metadata.Metadata
+import org.apache.tika.mime.MediaType
 import java.io.BufferedInputStream
 
 class ImageValidator(
     tika: Tika,
     stream: BufferedInputStream,
+    contentType: MediaType? = null,
     fileShouldBeImageErrorMessage: String = "Файл должен быть изображением",
-    metadata: Metadata = Metadata()
-) : FilesValidator(tika, stream, metadata) {
+) : FilesValidator(tika, stream, contentType) {
 
-    val ext: String by lazy { signatureMimeType.subtype }
+    val ext: String by lazy { super.mediaType.subtype }
     val imageData: ImageInfo by lazy {
         stream.mark(Int.MAX_VALUE)
         val imageData = Imaging.getImageInfo(stream, "file.$ext")
@@ -22,7 +22,20 @@ class ImageValidator(
     }
 
     init {
-        checkSignatureMimeTypeBaseType("image") { fileShouldBeImageErrorMessage }
+        checkMimeTypeBaseType("image") { fileShouldBeImageErrorMessage }
+    }
+
+    fun checkImage(compare: (imageData: ImageInfo) -> Boolean, errorMessage: () -> String) = also {
+        require(compare(imageData)) {
+            errorMessage()
+        }
+    }
+
+    fun checkSize(compare: (w: Int, h: Int) -> Boolean, errorMessage: () -> String) = also {
+        require(compare(imageData.width, imageData.height)) {
+            logger.debug("Image size: ${imageData.width}x${imageData.height}")
+            errorMessage()
+        }
     }
 
     fun checkWidth(compare: (w: Int) -> Boolean, errorMessage: () -> String) = also {

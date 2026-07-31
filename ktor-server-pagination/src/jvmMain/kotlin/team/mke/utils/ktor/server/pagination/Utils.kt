@@ -49,7 +49,16 @@ inline fun <reified T : Comparable<T>> ApplicationCall.paginationData(
     val data = run {
         parameters.get(
             parameterName, PaginationData.serializer(T::class.serializerOrNull() ?: ContextualSerializer(T::class)), json
-        ) ?: PaginationData()
+        ) ?: run {
+            val count = parameters["p_count"]?.toIntOrNull() ?: -1
+            val lastEntity = parameters["p_lastEntity"]
+                ?.let { json.decodeFromString(T::class.serializerOrNull() ?: ContextualSerializer(T::class), it) }
+            val lastSortedValue = parameters["p_lastSortedValue"]
+            val sortBy = parameters["p_sortBy"]
+            val sort = parameters["p_sort"]?.let { Sort.valueOf(it.uppercase()) } ?: Sort.DESC
+
+            PaginationData(count, lastEntity, lastSortedValue, sortBy, sort)
+        }
     }.letIf({ it.count == -1 }) { it.copy(count = default) }
 
     require(data.count in min..max, rangeError)

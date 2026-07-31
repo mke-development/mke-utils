@@ -3,7 +3,8 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.VersionCatalog
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.gradle.api.problems.internal.GradleCoreProblemGroup.versionCatalog
+import javax.xml.catalog.CatalogManager.catalog
 
 plugins {
     kotlin("multiplatform") apply false
@@ -16,7 +17,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "4.0.0-rc1"
+version = "4.0.0-rc2"
 
 allprojects {
     apply(plugin = "org.jetbrains.kotlinx.kover")

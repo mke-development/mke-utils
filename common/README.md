@@ -1,4 +1,4 @@
-# Common (`common`)
+# Базовые утилиты (`common`)
 
 `common` — набор базовых интерфейсов и utility-расширений для модулей `mke-utils`.
 
@@ -12,30 +12,11 @@
 - извлечение и нормализация телефонных номеров (`exportPhones`)
 - форматирование размера в байтах (`Number.bytes`)
 - удобные toggle-операции для коллекций (`/`, `/=`)
-- базовые интерфейсы инициализации (`Initiable`, `BaseInitiable`, `InitiableWithArgs`)
 - безопасный вызов с перехватом ошибок (`safe`) на JVM
 - time zone и date/time форматтеры на JVM
 - utility для `react.Props` на JS
 
 ## `commonMain` API
-
-### Инициализация и версионирование
-
-- `Versionable` — контракт с полем `version: Int`
-- `Initiable` — базовый контракт `init()`
-- `BaseInitiable` — хранит флаг `isInit` и реализует `AutoCloseable`
-- `InitiableWithArgs<T>` — инициализация с аргументом `init(data: T)`
-
-Пример:
-
-```kotlin
-class Service : InitiableWithArgs<String>() {
-    override fun init(data: String) {
-        super.init(data)
-        println("Init with: $data")
-    }
-}
-```
 
 ### Телефонные номера
 
@@ -94,22 +75,27 @@ val result = safe(crashInterceptor, logger) {
 }
 ```
 
-### Date/Time
+### Дата и время (Date/Time)
 
-- `defaultTimeZone` — берется из env `TIME_ZONE`, fallback: `ZoneId.systemDefault()`
+- `defaultTimeZone` — берет часовой пояс из переменной окружения `TIME_ZONE`, фоллбек: `ZoneId.systemDefault()`.
 - `utcZoneId = ZoneId.of("Z")`
 - `yekaZoneId = ZoneId.of("+05:00")`
-- форматтеры: `shortDateFormat`, `dateFormat`, `dateTimeFormat`, `shortDateTimeFormat`, `hoursFormat`, `minutesFormat`
+
+Предустановленные форматы дат с русской локалью (`DateTimeFormatter`):
+- `shortDateFormat` (`dd.MM.yyyy`) — пример: `15.05.2026`
+- `dateFormat` (`d MMMM yyyy`) — пример: `15 мая 2026`
+- `dateTimeFormat` (`d MMMM yyyy, HH:mm`) — пример: `15 мая 2026, 14:30`
+- `shortDateTimeFormat` (`dd.MM.yyyy, HH:mm`) — пример: `15.05.2026, 14:30`
+- `timeFormatter` (`HH:mm`) — пример: `14:30`
+- `hoursFormat` (`HH`) — пример: `14`
+- `minutesFormat` (`mm`) — пример: `30`
 
 ### Дополнительные расширения
 
 - `Duration.rand(factorial = 0.1)` — случайно изменяет длительность в диапазоне `±factorial`
 - `List<BigDecimal>.sum()` — сумма через `sumOf`
+- `List<BigDecimal>.avg()` — среднее через `sum() / size`
 - `Throwable.findCause(...)` / `findCause<T>()` — поиск причины по типу в цепочке `cause`
-
-### Утилиты JVM
-
-- `argsToProperties(args: Array<String>)` — переносит JVM args вида `key=value` в `System.setProperty`
 
 ## `jsMain` API
 
@@ -121,6 +107,25 @@ val result = safe(crashInterceptor, logger) {
 
 Пример:
 
+```js
+const props = {
+    onClick: () => console.log('clicked'),
+    user: {
+        name: 'Alice',
+        secret: 's3cr3t'
+    }
+}
+```
+
 ```kotlin
 val cleanProps = props.other("onClick", "user.secret")
+```
+
+```js
+// cleanProps 
+{
+    user: {
+        name: 'Alice'
+    }
+}
 ```

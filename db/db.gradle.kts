@@ -14,6 +14,7 @@ kotlin {
         jvmMain {
             dependencies {
                 api(projects.common)
+                api(projects.i18n)
                 implementation(projects.env)
 
                 api(libs.exposed.core)

@@ -6,6 +6,18 @@ import team.mke.utils.db.TemporalUnits
 import java.time.LocalDate
 import java.time.temporal.Temporal
 
+/**
+ * Класс для представления SQL функции `DATE_SUB`
+ *
+ * Пример:
+ * ```
+ * val dateSubExpression = DateSub(UsersAuthSessions.dateCreate, 1, TemporalUnits.DAY)
+ * ```
+ * Это выражение будет соответствовать SQL-запросу:
+ * ```
+ * DATE_SUB(date_create, INTERVAL 1 DAY)
+ * ```
+ * */
 class DateSub<T : Temporal?>(val date: Expression<T>, val interval: Expression<*>, val unit: TemporalUnits) : Expression<LocalDate>() {
     override fun toQueryBuilder(queryBuilder: QueryBuilder) {
         queryBuilder.append("DATE_SUB(")

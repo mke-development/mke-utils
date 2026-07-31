@@ -2,8 +2,6 @@ package team.mke.utils.bg
 
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import ru.raysmith.utils.uuid
 import team.mke.utils.crashinterceptor.CrashInterceptor
@@ -30,17 +28,11 @@ abstract class BaseWhileBackgroundProcess(
 
     }
 
-    override fun run() {
-        val sd = startDelay()
-
-        synchronized(mutex) {
-            if (sd == Duration.ZERO) {
-                isReadyToRestart = false
-            }
-        }
-
+    override fun run(force: Boolean) {
         job = Background.scope.launch(handler + coroutineName) {
-            delay(sd)
+            if (!force) {
+                delay(startDelay())
+            }
             while (isActive) {
                 synchronized(mutex) { isReadyToRestart = false }
                 safe(crashInterceptor, logger) {
@@ -55,7 +47,6 @@ abstract class BaseWhileBackgroundProcess(
                     break
                 }
                 delay(delay())
-                synchronized(mutex) { isReadyToRestart = false }
             }
         }
     }
@@ -65,4 +56,3 @@ abstract class BaseWhileBackgroundProcess(
         kotlinx.coroutines.delay(delay)
     }
 }
-

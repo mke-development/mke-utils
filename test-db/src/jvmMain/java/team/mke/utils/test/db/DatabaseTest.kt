@@ -11,20 +11,19 @@ import org.jetbrains.exposed.v1.core.SqlLogger
 import org.jetbrains.exposed.v1.core.StdOutSqlLogger
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.Transaction
-import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import ru.raysmith.exposedoption.Options
 import team.mke.utils.db.BaseDatabase
-import team.mke.utils.db.ignoreReferentialIntegrity
+import team.mke.utils.db.ignoreReferentialIntegrityMySQL
 import team.mke.utils.db.truncate
 import team.mke.utils.io.disabledOutputStream
 import team.mke.utils.io.originalOut
-import java.util.UUID
-import kotlin.random.Random
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredFunctions
 
@@ -49,6 +48,16 @@ abstract class DatabaseTest(
     fun afterDatabaseCleared(block: DatabaseTest.() -> Unit) {
         afterDatabaseCleared = block
     }
+
+    private var ignoreReferentialIntegrityFunction: context(JdbcTransaction) (block: () -> Unit) -> Unit = { block: () -> Unit ->
+        ignoreReferentialIntegrityMySQL {
+            block()
+        }
+    }
+    fun ignoreReferentialIntegrityFunction(f: context(JdbcTransaction) (block: () -> Unit) -> Unit) {
+        ignoreReferentialIntegrityFunction = f
+    }
+
 
     init {
         fun IColumnType<*>.rawSqlType(): String = when (this) {
@@ -82,44 +91,11 @@ abstract class DatabaseTest(
             }
         }
 
-//        @Suppress("UNCHECKED_CAST")
-//        tables.filterIsInstance<IdTable<*>>().forEach {
-//            it.id.defaultValueFun = {
-//                var nextId: Any
-//
-//                while(true) {
-//                    nextId = when(it.id.columnType.rawSqlType()) {
-//                        "INT" -> {
-//                            val lastId = usedIds[it]?.last() as Int? ?: 0
-//                            Random.nextInt(lastId, lastId.plus(1000))
-//                        }
-//                        "LONG" -> {
-//                            val lastId = usedIds[it]?.last() as Long? ?: 0L
-//                            Random.nextLong(lastId, lastId.plus(1000))
-//                        }
-//                        else -> error("Unsupported IdTable type: ${it::class.simpleName}")
-//                    }
-//
-//                    if (usedIds[it]?.contains(nextId) != true ) {
-//                        usedIds.getOrPut(it) { mutableListOf() }
-//                        usedIds[it]!!.add(nextId)
-//                        break
-//                    }
-//                }
-//
-//                when(it.id.columnType.rawSqlType()) {
-//                    "INT" -> EntityID(nextId as Int, it as IdTable<Int>)
-//                    "LONG" -> EntityID(nextId as Long, it as IdTable<Long>)
-//                    else -> error("Unsupported IdTable type: ${it::class.simpleName}")
-//                }
-//            } as (() -> Nothing)?
-//        }
-
         afterTest { (test, result) ->
             System.setOut(disabledOutputStream)
             if (test.parents().none { it.config?.tags?.contains(preserveDatabaseTag) == true }) {
                 transaction {
-                    ignoreReferentialIntegrity {
+                    ignoreReferentialIntegrityFunction {
                         SchemaUtils.listTables().forEach {
                             Table(it).truncate()
                         }
@@ -154,8 +130,8 @@ abstract class DatabaseTest(
             withSystemProperties(mapOf("DB_USER" to "root", "DB_PASS" to "", "DB_NAME" to "test")) {
                 databaseKClass
                     .declaredFunctions
-                    .first { it.name == BaseDatabase::setupEagerlyCollector.name }
-                    .call(databaseKClass.objectInstance)
+                    .firstOrNull { it.name == BaseDatabase::setupEagerlyCollector.name }
+                    ?.call(databaseKClass.objectInstance)
             }
         }
 

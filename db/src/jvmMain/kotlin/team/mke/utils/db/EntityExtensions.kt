@@ -22,6 +22,22 @@ inline fun <ID : Any, reified T : Entity<ID>> T?.orThrow(id: Any? = null, messag
     throw EntityNotFoundException(entityClass, id, message)
 }
 
+/**
+ * Wraps current entity into [REF] using [alias] if possible, otherwise returns [defaultValue]
+ *
+ * Example:
+ * ```kotlin
+ * Films
+ *     .leftJoin(Genres)
+ *     .selectAll()
+ *     .mapLazy { Film.wrapRow(it) }
+ *     .forEach { film ->
+ *          val genre = film.wrapRowOrDefault { genre } // load from entity cache
+ *     }
+ * ```
+ *
+ *
+ * */
 inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<ID>> SOURCE.wrapRowOrDefault(
     alias: Alias<IdTable<ID>>? = null, defaultValue: SOURCE.() -> REF
 ): REF {
@@ -44,44 +60,38 @@ inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<
     } as REF
 }
 
-context(e: E)
+/**
+ * Delegates for optional reference to entity via [alias] if possible, otherwise returns null
+ * */
+context(entity: E)
 inline fun <ID : Any, reified E : Entity<ID>, RID : Any, reified R : Entity<RID>> EntityClass<RID, R>.optionalReferencedOn(
     column: Column<EntityID<ID>?>,
     alias: Alias<IdTable<ID>>
 ): ReadWriteProperty<Any?, R?> {
-    val entity = e
 
     return object : ReadWriteProperty<Any?, R?> {
         val ref = optionalReferencedOn(column)
 
         override fun getValue(thisRef: Any?, property: KProperty<*>): R? {
-            return e.wrapRowOrDefault(alias) {
+            return entity.wrapRowOrDefault(alias) {
                 ref.getValue(this, property)
             }
         }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: R?) {
-            with(e) {
+            with(entity) {
                 ref.setValue(entity, property, value)
             }
         }
     }
 }
 
-inline fun <ID : Any, REFID: Any, reified REF : Entity<REFID>?, SOURCE : Entity<ID>, T : IdTable<ID>> SOURCE.wrapRowFromAliasOrDefault(
-    alias: Alias<T>? = null, defaultValue: SOURCE.() -> REF
-): REF {
-    return if (alias != null) wrapRowOrDefault(alias) { defaultValue() }
-    else defaultValue()
-}
-
-inline fun <ID : Any, SOURCE : Entity<ID>, T> SOURCE.wrapValueFromAliasOrDefault(
-    alias: Expression<T>? = null, defaultValue: SOURCE.() -> T
-): T {
-    return if (alias != null) readValues.getOrNull(alias) ?: defaultValue()
-    else defaultValue()
-}
-
+/**
+ * Возвращает имя сущности для текущего класса, используя аннотации [EntityName] и [I18nEntityName],
+ * или имя класса по умолчанию.
+ *
+ * @param locale локаль для поиска имени сущности в аннотации [I18nEntityName].
+ * */
 fun EntityClass<*, *>.entityName(locale: Locale? = null): String? {
     val kClass = (javaClass.enclosingClass as Class<*>).kotlin
     return kClass.findAnnotation<EntityName>()?.name

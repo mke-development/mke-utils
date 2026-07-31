@@ -2,6 +2,7 @@ package team.mke.utils.ktor.openapi
 
 import io.github.smiley4.ktoropenapi.config.MultipartBodyConfig
 import io.github.smiley4.ktoropenapi.config.SchemaOverwriteModule
+import io.github.smiley4.schemakenerator.core.annotations.Default
 import io.github.smiley4.schemakenerator.core.annotations.Description
 import io.github.smiley4.schemakenerator.core.annotations.Example
 import io.github.smiley4.schemakenerator.core.annotations.Format
@@ -13,10 +14,21 @@ import io.swagger.v3.oas.annotations.Hidden
 import io.swagger.v3.oas.models.media.Schema
 import kotlinx.serialization.Transient
 import team.mke.utils.serialization.getSerialName
+import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.javaType
+
+@OptIn(ExperimentalStdlibApi::class)
+context(kc: KCallable<*>)
+private fun List<SchemaOverwriteModule>.findSchema() = find { overwrite ->
+    overwrite.identifier == kc.returnType.javaType.typeName
+}?.schema?.invoke()
+
+private fun KCallable<*>.format(openApiOverwrites: List<SchemaOverwriteModule>) = findAnnotation<Format>()?.format
+    ?: findAnnotation<io.swagger.v3.oas.annotations.media.Schema>()?.format
+    ?: (returnType.classifier as? KClass<*>)?.findAnnotation<Name>()?.name ?: openApiOverwrites.findSchema()?.format
 
 @OptIn(ExperimentalStdlibApi::class)
 fun MultipartBodyConfig.apply(clazz: KClass<*>, openApiOverwrites: List<SchemaOverwriteModule> = emptyList()) {
@@ -29,22 +41,22 @@ fun MultipartBodyConfig.apply(clazz: KClass<*>, openApiOverwrites: List<SchemaOv
         }
         .forEach {
             val schema = Schema<Any>().apply {
-                val name = (it.returnType.classifier as? KClass<*>)?.findAnnotation<Name>()?.name
-                val isObject = name != null
+                name = (it.returnType.classifier as? KClass<*>)?.findAnnotation<Name>()?.name
 
-                format = it.findAnnotation<Format>()?.format ?: if (isObject) {
-                    name
-                } else {
-                    openApiOverwrites.find { overwrite ->
-                        overwrite.identifier == it.returnType.javaType.typeName
-                    }?.schema?.invoke()?.format
-                }
+                format = it.format(openApiOverwrites)
                 description = it.findAnnotation<Description>()?.description
                 deprecated = it.hasAnnotation<Deprecated>()
-                example = it.findAnnotation<Example>()?.example ?: ""
+                it.findAnnotation<Example>()?.example?.let { value ->
+                    example = value
+                }
                 nullable = it.returnType.isMarkedNullable
+                enum = it.findAnnotation<io.swagger.v3.oas.annotations.media.Schema>()?.allowableValues?.toList()
+                it.findAnnotation<Default>()?.value
+                    ?: it.findAnnotation<io.swagger.v3.oas.annotations.media.Schema>()?.defaultValue?.let { value ->
+                        default = value
+                    }
 
-                types = if (isObject) {
+                types = if (it.returnType.classifier is KClass<*>) {
                     setOf("object")
                 } else {
                     it.type()

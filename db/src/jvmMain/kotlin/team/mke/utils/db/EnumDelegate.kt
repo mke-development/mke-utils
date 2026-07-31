@@ -15,6 +15,10 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
+/**
+ * Абстрактная таблица для enum. Содержит единственное поле - значение enum.
+ * Используется для реализации делегата [EnumDelegate].
+ * */
 abstract class EnumTable<E : Enum<E>>(
     name: String, enumClass: KClass<E>,
     enumName: String = enumClass.simpleName?.let { it.replaceFirstChar { c -> c.lowercase() } } ?: error("enum should not be anonymous")
@@ -26,10 +30,18 @@ abstract class EnumTable<E : Enum<E>>(
     val value = enumerationByName(enumName, 255, enumClass)
 }
 
+/**
+ * Абстрактная сущность для enum. Содержит единственное поле - значение enum.
+ * Используется для реализации делегата [EnumDelegate].
+ * */
 abstract class EnumEntity<E : Enum<E>>(id: EntityID<Int>, table: EnumTable<E>) : IntEntity(id) {
     var value by table.value
 }
 
+/**
+ * Абстрактная таблица для отношений между сущностью и enum. Содержит единственное поле - ссылку на enum.
+ * Используется для реализации делегата [EnumDelegate].
+ * */
 abstract class EnumRelationshipTable<E : Enum<E>>(name: String, columnName: String, table: EnumTable<E>): Table(name) {
     val value = reference(columnName, table)
 }

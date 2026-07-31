@@ -30,7 +30,7 @@ context(ec: EntityClass<ID, E>)
 fun <ID : Any, E : Entity<ID>> getAllImpl(
     defaultQuery: Op<Boolean>? = defaultQuery(ec.table),
     onQuery: Query.() -> Unit = { },
-    query: (() -> Op<Boolean>)? = null
+    query: (() -> Op<Boolean>?)? = null
 ): SizedIterable<E> {
     return ec.table
         .selectAll()
@@ -41,70 +41,13 @@ fun <ID : Any, E : Entity<ID>> getAllImpl(
                 }
             }
             if (query != null) {
-                adjustWhere {
-                    and { query() }
-                }
-            }
-        }
-        .also { it.onQuery() }
-        .mapLazy { ec.wrapRow(it) }
-}
-
-
-context(ec: EntityClass<ID, E>)
-fun <ID : Any, E : Entity<ID>, C : Column<*>, T : Comparable<T>> getAllImpl(
-    paginationData: Pair<PaginationData<T>?, Pair<C, SortOrder>>? = null,
-    defaultQuery: Op<Boolean>? = defaultQuery(ec.table),
-    onQuery: Query.() -> Unit = { },
-    query: (() -> Op<Boolean>)? = null
-): SizedIterable<E> {
-    return ec.table
-        .selectAll()
-        .apply {
-            if (defaultQuery != null) {
-                adjustWhere {
-                    and { defaultQuery }
-                }
-            }
-            if (query != null) {
-                adjustWhere {
-                    and { query() }
-                }
-            }
-        }
-        .let {
-            if (paginationData != null && paginationData.first != null) {
-                val (pageData, colData) = paginationData
-                val (column, sort) = colData
-
-                @Suppress("UNCHECKED_CAST")
-                val query = if (pageData?.lastEntity != null) {
-                    it.adjustWhere {
-                        and {
-                            when (sort) {
-                                SortOrder.ASC, SortOrder.ASC_NULLS_FIRST, SortOrder.ASC_NULLS_LAST -> {
-                                    if (column.columnType is EntityIDColumnType<*>) {
-                                        (column as Column<EntityID<T>>).greater(pageData.lastEntity!!)
-                                    } else {
-                                        column.greater(pageData.lastEntity!!)
-                                    }
-                                }
-
-                                SortOrder.DESC, SortOrder.DESC_NULLS_FIRST, SortOrder.DESC_NULLS_LAST -> {
-                                    if (column.columnType is EntityIDColumnType<*>) {
-                                        (column as Column<EntityID<T>>).less(pageData.lastEntity!!)
-                                    } else {
-                                        column.less(pageData.lastEntity!!)
-                                    }
-                                }
-                            }
-                        }
+                val op = query()
+                if (op != null) {
+                    adjustWhere {
+                        and { op }
                     }
-                } else it
-
-                query.orderBy(colData)
-                    .limit(pageData!!.count)
-            } else it
+                }
+            }
         }
         .also { it.onQuery() }
         .mapLazy { ec.wrapRow(it) }

@@ -61,6 +61,5 @@ object Background {
         val process = findProcess(id) ?: return@sync
         process.cancel()
         process.onCancel()
-        process.start(throwOnRegistered = false)
     }
 }

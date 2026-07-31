@@ -36,10 +36,19 @@ fun Parameters.date(
 
 val PipelineContext<*, ApplicationCall>.logger get() = call.application.log
 
-val RoutingCall.ip: String get() {
-    return request.headers["X-Forwarded-For"]?.split(",")?.first()?.trim()
-        ?: request.headers["X-Real-IP"]
-        ?: request.origin.remoteHost
+/**
+ * Извлекает IP-адрес клиента из текущего HTTP-запроса.
+ *
+ * Порядок определения IP-адреса:
+ * 1. Заголовок `X-Real-IP` — приоритетный источник, устанавливаемый обратным прокси (например, Nginx).
+ * 2. [RequestConnectionPoint.remoteHost][io.ktor.server.plugins.origin] — резервный источник.
+ *    При установленном плагине `XForwardedHeaders` возвращает клиентский IP из `X-Forwarded-For`,
+ *    иначе — прямой IP-адрес TCP-соединения.
+ *
+ * @return Строковое представление IP-адреса клиента.
+ */
+val ApplicationCall.ip: String get() {
+    return request.headers["X-Real-IP"] ?: request.origin.remoteHost
 }
 
 /**

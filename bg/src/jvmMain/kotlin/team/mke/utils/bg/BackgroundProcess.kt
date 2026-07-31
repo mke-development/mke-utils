@@ -13,24 +13,25 @@ interface BackgroundProcess {
     val isActive: Boolean
     val logger: Logger
 
-    fun run()
+    fun run(force: Boolean = false)
     fun cancel(cause: CancellationException? = null)
     fun onCancel() {
 
     }
 
     /** Перезапускает процесс. Возвращает true если был перезапущен, false если перезапуск был отложен */
-    fun restart(): Boolean {
+    fun restart(force: Boolean = false): Boolean {
         logger.debug("Background process '$name' restarted...")
         Background.restart(id)
+        start(throwOnRegistered = false, force)
         return true
     }
 
     /** Регистрирует и запускает процесс */
-    fun start(throwOnRegistered: Boolean) {
+    fun start(throwOnRegistered: Boolean, force: Boolean = false) {
         logger.debug("Background process '$name' started...")
         Background.registered(this, throwOnRegistered)
-        run()
+        run(force)
     }
 
     /** Останавливает и удаляет процесс */
