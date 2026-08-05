@@ -50,7 +50,7 @@ val json = Json {
 private fun JsonBuilder.applyDefaultJson() {
     isLenient = true
     ignoreUnknownKeys = true
-    prettyPrint = Environment.isDev()
+    prettyPrint = !Environment.isProd()
     serializersModule = SerializersModule {
         contextual(LocalDate::class, LocalDateSerializer)
         contextual(LocalTime::class, LocalTimeSerializer)

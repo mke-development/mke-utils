@@ -1,11 +1,11 @@
 package team.mke.utils.test
 
-import team.mke.utils.ext.PhoneFormat
-import team.mke.utils.ext.defaultExportPhonesFormats
-import team.mke.utils.ext.exportPhones
+import team.mke.utils.PhoneFormat
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import team.mke.utils.defaultExportPhonesFormats
+import team.mke.utils.exportPhones
 
 class ExportPhonesTests : FreeSpec({
     "exportPhones with default formats" {

@@ -1,4 +1,4 @@
-package team.mke.utils.ext
+package team.mke.utils
 
 import kotlin.math.log10
 import kotlin.math.pow
@@ -22,3 +22,14 @@ val Number.bytes: String get() = with(toLong()) {
 
     return "${this / 1024.0.pow(digitGroups.toDouble()).roundToInt()} ${units[digitGroups]}"
 }
+
+//fun Number.bytes(locale: Locale): String = with(toLong()) {
+//    if (this <= 0) {
+//        return "0 б"
+//    }
+//
+//    val units = arrayOf("б", "кб", "мб", "гб", "тб")
+//    val digitGroups = (log10(this.toDouble()) / log10(1024.0)).toInt()
+//
+//    return "${this / 1024.0.pow(digitGroups.toDouble()).roundToInt()} ${units[digitGroups]}"
+//}

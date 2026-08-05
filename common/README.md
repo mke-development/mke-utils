@@ -27,24 +27,10 @@
 Пример:
 
 ```kotlin
-import team.mke.utils.ext.exportPhones
+import team.mke.utils.exportPhones
 
 val phones = "Связь: +7 (999) 111-22-33 и 89995554433".exportPhones()
 // ["+79991112233", "+79995554433"]
-```
-
-### Расширения коллекций
-
-- `MutableCollection<T> /= value` — toggle: добавить, если нет; удалить, если есть
-- `List<T> / value` — возвращает новый список с toggle-семантикой
-- `Set<T> / value` — возвращает новый set с toggle-семантикой
-
-Пример:
-
-```kotlin
-val base = listOf("a", "b")
-val x = base / "c" // [a, b, c]
-val y = x / "a"    // [b, c]
 ```
 
 ### Расширения чисел

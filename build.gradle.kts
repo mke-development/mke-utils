@@ -2,9 +2,8 @@ import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.SourcesJar
 import com.vanniktech.maven.publish.VersionCatalog
-import org.gradle.api.problems.internal.GradleCoreProblemGroup.versionCatalog
-import javax.xml.catalog.CatalogManager.catalog
 
 plugins {
     kotlin("multiplatform") apply false
@@ -17,37 +16,12 @@ plugins {
 }
 
 group = "team.mke"
-version = "4.0.0-rc2"
-
-allprojects {
-    apply(plugin = "org.jetbrains.kotlinx.kover")
-
-    tasks {
-        withType<Test> {
-            useJUnitPlatform()
-            jvmArgs(
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-            )
-            filter {
-                isFailOnNoMatchingTests = false
-            }
-            testLogging {
-                showExceptions = true
-                showStandardStreams = true
-                events = setOf(
-                    org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
-                    org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
-                )
-                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-            }
-        }
-    }
-}
+version = "4.0.0-rc3"
 
 subprojects {
     val isCatalog = name == "catalog"
 
+    apply(plugin = "org.jetbrains.kotlinx.kover")
     apply(plugin = "com.vanniktech.maven.publish")
     apply(plugin = "org.jetbrains.dokka")
     if (isCatalog) {
@@ -70,7 +44,7 @@ subprojects {
             } else {
                 configure(KotlinMultiplatform(
                     javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
-                    sourcesJar = true,
+                    sourcesJar = SourcesJar.Sources(),
                 ))
             }
 

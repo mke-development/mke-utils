@@ -11,6 +11,7 @@ import react.Props
  *
  * @return `other`
  * */
+@OptIn(ExperimentalWasmJsInterop::class)
 fun Props.other(vararg prop: String): Props {
     val res = unsafeJso<Props> { }
 

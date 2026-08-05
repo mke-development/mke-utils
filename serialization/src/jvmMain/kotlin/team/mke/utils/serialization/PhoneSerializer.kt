@@ -7,9 +7,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import team.mke.utils.ext.PhoneFormat
-import team.mke.utils.ext.defaultExportPhonesFormats
-import team.mke.utils.ext.exportPhones
+import team.mke.utils.PhoneFormat
+import team.mke.utils.defaultExportPhonesFormats
+import team.mke.utils.exportPhones
 
 @OptIn(ExperimentalSerializationApi::class)
 open class PhoneSerializer(val formats: Array<PhoneFormat> = defaultExportPhonesFormats) : KSerializer<String?> {

@@ -3,16 +3,15 @@ plugins {
 }
 
 kotlin {
-    js(IR) {
+    js {
         browser {
             testTask {
                 useKarma {
                     useChromeHeadless()
-                    useFirefox()
+                    useFirefoxHeadless()
                 }
             }
         }
         nodejs()
-        binaries.executable()
     }
 }

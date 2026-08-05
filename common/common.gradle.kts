@@ -23,6 +23,12 @@ kotlin {
             }
         }
 
+        jvmTest {
+            dependencies {
+                implementation(libs.kotest)
+            }
+        }
+
         jsMain {
             dependencies {
                 implementation(kotlinWrappers.react)

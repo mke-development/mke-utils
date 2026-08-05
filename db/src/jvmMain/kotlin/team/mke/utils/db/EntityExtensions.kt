@@ -95,7 +95,10 @@ inline fun <ID : Any, reified E : Entity<ID>, RID : Any, reified R : Entity<RID>
 fun EntityClass<*, *>.entityName(locale: Locale? = null): String? {
     val kClass = (javaClass.enclosingClass as Class<*>).kotlin
     return kClass.findAnnotation<EntityName>()?.name
-        ?: kClass.findAnnotations<I18nEntityName>().find { it.key == locale?.toLanguageTag() }?.name
+        ?: kClass.findAnnotations<I18nEntityName>().ifEmpty { null }?.let { annotations ->
+            annotations.find { it.key == locale?.toLanguageTag() }?.name
+                ?: annotations.find { it.key == locale?.language }?.name
+        }
         ?: kClass.simpleName
 }
 

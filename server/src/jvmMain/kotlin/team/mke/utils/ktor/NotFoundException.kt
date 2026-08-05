@@ -1,5 +1,6 @@
 package team.mke.utils.ktor
 
+@Suppress("DEPRECATION")
 @Deprecated("use utils for EntityNotFoundException or respond 404")
 fun notFound(message: String): Nothing = throw NotFoundException(message)
 

@@ -1,4 +1,4 @@
-package team.mke.utils.ext
+package team.mke.utils
 
 /**
  * Данные формата телефона.

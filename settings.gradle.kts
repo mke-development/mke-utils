@@ -8,7 +8,6 @@ pluginManagement {
     }
 }
 
-
 include("common")
 include("bg")
 include("crashInterceptor")
