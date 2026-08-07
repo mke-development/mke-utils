@@ -8,6 +8,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -26,6 +27,10 @@ class OptionsPluginConfiguration {
     var json: Json = team.mke.utils.json.json
     var crashInterceptor: CrashInterceptor<*>? = null
     var logger: Logger? = null
+
+    companion object {
+        internal val verificationKeysWhiteListKey = "verificationKeysWhiteList"
+    }
 
     var getDocsSetup: RouteConfig.() -> Unit = {}
     var getDocs: OpenApiRouteBlock = {
@@ -67,6 +72,13 @@ class OptionsPluginConfiguration {
         request {
             body<Map<String, Any?>> {
                 required = true
+                description = """
+                    Список ключей и значений. Дополнительно можно передать:
+                    - `${verificationKeysWhiteListKey}` - Список ключей по которым будет выполнен триггер на валидацию. По умолчанию — все ключи.
+                    Пример: в настройке интеграции, когда есть ключи login и password и идентичные триггеры с валидацией подключения, 
+                    при обновлении данных, сначала будет произведена попытка авторизации с новым логином и старым паролем, что приведет к ошибке.
+                    При указании `${verificationKeysWhiteListKey}=password`, триггер будет вызван только один раз после сохранения нового логина. 
+                """.trimIndent()
 //                example("Список ключей") { // TODO to fix that provide Json builder (with Map<String, Any?> serializer) for ExampleEncoder
 //                    value = mapOf("foo" to 2, "bar" to false)
 //                }
@@ -129,15 +141,28 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit 
 
         put(config.putDocs) {
             val text = call.receiveText()
+            val verificationKeysWhiteList = mutableListOf<String>()
             val options = config.json.decodeFromString<JsonObject>(text).map { (key, value) ->
-                check(value is JsonPrimitive) { "Option value should be primitive" }
-                OptionHandler.registered[key]?.let { handler ->
-                    key to if (value is JsonNull) null else handler.decodeFromJsonElement(value)
-                } ?: run {
-                    call.respond(HttpStatusCode.NotFound, errorDTO(key, HttpMethod.Put))
-                    return@put
+                when (key) {
+                    OptionsPluginConfiguration.verificationKeysWhiteListKey -> {
+                        check(value is JsonArray) { "$key should be json array" }
+                        verificationKeysWhiteList.addAll(value.map {
+                            check(it is JsonPrimitive) { "${key}'s entries should be primitive" }
+                            it.content
+                        })
+                        null
+                    }
+                    else -> {
+                        check(value is JsonPrimitive) { "Option value should be primitive" }
+                        OptionHandler.registered[key]?.let { handler ->
+                            key to if (value is JsonNull) null else handler.decodeFromJsonElement(value)
+                        } ?: run {
+                            call.respond(HttpStatusCode.NotFound, errorDTO(key, HttpMethod.Put))
+                            return@put
+                        }
+                    }
                 }
-            }.toMap()
+            }.filterNotNull().toMap()
 
             val rollbackData = options.map { (key, _) ->
                 key to OptionHandler.registered[key]!!.get().value
@@ -149,7 +174,8 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit 
                 val result = JsonObject(
                     options.map { (key, newValue) ->
                         OptionHandler.registered[key]!!.let { handler ->
-                            if (handler.setValue(newValue, shouldBeVerified = true)) {
+                            val shouldBeVerified = verificationKeysWhiteList.isEmpty() || verificationKeysWhiteList.contains(key)
+                            if (handler.setValue(newValue, shouldBeVerified = shouldBeVerified)) {
                                 updated[key] = newValue
                             }
                             key to handler.encodeToJsonElement()

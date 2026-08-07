@@ -75,7 +75,7 @@ class OptionsRoutingContext {
                 edit = { newValue, shouldBeVerified ->
                     val previousValue = delegate.value
 
-                    if (previousValue == newValue) return@OptionHandler false
+                    if (!shouldBeVerified && previousValue == newValue) return@OptionHandler false
                     try {
                         delegate.set(newValue)
                         if (shouldBeVerified) {
