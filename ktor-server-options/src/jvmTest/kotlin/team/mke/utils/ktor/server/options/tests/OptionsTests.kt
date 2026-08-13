@@ -38,7 +38,7 @@ object Database : BaseDatabase() {
 private var foo by option<String?>("foo", Duration.INFINITE) { getOrNull() }
 private var bar by option<String?>("bar", Duration.INFINITE) { getOrNull() }
 
-class OptionsTests : DatabaseTest(Database::class, listOf(Options), {
+class OptionsTests : DatabaseTest<OptionsTests>(team.mke.utils.ktor.server.options.tests.Database, listOf(Options), {
 
     fun testOptionsApplication(
         setup: suspend context(OptionsPluginConfiguration, Route) OptionsRoutingContext.() -> Unit,

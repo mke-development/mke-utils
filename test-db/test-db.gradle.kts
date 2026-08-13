@@ -15,7 +15,10 @@ kotlin {
                 implementation(libs.kotest.extensions.htmlreporter)
                 implementation(libs.kotest.extensions.junitxml)
                 implementation(libs.kotest.html.reporter)
-                implementation(libs.h2)
+                implementation(project.dependencies.platform(libs.testcontainers.bom))
+                implementation(libs.testcontainers.core)
+                implementation(libs.testcontainers.mariadb)
+                implementation(libs.mariadb.connector)
                 implementation(libs.reflections)
             }
         }
