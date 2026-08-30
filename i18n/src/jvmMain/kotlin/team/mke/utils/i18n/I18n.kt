@@ -16,7 +16,7 @@ internal object I18n {
         bundleNames.add(bundle)
     }
 
-    internal operator fun get(key: String, locale: Locale, vararg args: Any?): String {
+    internal fun getOrNull(key: String, locale: Locale, vararg args: Any?): String? {
         for(bundleName in bundleNames) {
             val bundle = ResourceBundle.getBundle(bundleName, locale)
             if (bundle.containsKey(key)) {
@@ -25,11 +25,21 @@ internal object I18n {
             }
         }
 
-        val bundlesString = bundleNames.joinToString()
-        throw MissingResourceException(
-            "Can't find resource for bundle $bundlesString, key $key",
-            bundlesString,
-            key,
-        )
+        return null
+    }
+
+    internal operator fun get(key: String, locale: Locale, vararg args: Any?): String {
+        return getOrNull(key, locale, *args) ?: key
+    }
+
+    internal fun getUnsafe(key: String, locale: Locale, vararg args: Any?): String {
+        return getOrNull(key, locale, *args) ?: run {
+            val bundlesString = bundleNames.joinToString()
+            throw MissingResourceException(
+                "Can't find resource for bundle $bundlesString, key $key",
+                bundlesString,
+                key,
+            )
+        }
     }
 }

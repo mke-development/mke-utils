@@ -153,7 +153,6 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit 
                         null
                     }
                     else -> {
-                        check(value is JsonPrimitive) { "Option value should be primitive" }
                         OptionHandler.registered[key]?.let { handler ->
                             key to if (value is JsonNull) null else handler.decodeFromJsonElement(value)
                         } ?: run {

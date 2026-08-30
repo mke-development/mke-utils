@@ -42,7 +42,7 @@ fun MultipartBodyConfig.apply(clazz: KClass<*>, openApiOverwrites: List<SchemaOv
         .forEach {
             val schema = Schema<Any>().apply {
                 name = (it.returnType.classifier as? KClass<*>)?.findAnnotation<Name>()?.name
-
+                types = it.type()
                 format = it.format(openApiOverwrites)
                 description = it.findAnnotation<Description>()?.description
                 deprecated = it.hasAnnotation<Deprecated>()
@@ -56,11 +56,6 @@ fun MultipartBodyConfig.apply(clazz: KClass<*>, openApiOverwrites: List<SchemaOv
                         default = value
                     }
 
-                types = if (it.returnType.classifier is KClass<*>) {
-                    setOf("object")
-                } else {
-                    it.type()
-                }
             }
 
             part(it.getSerialName(), schema) {

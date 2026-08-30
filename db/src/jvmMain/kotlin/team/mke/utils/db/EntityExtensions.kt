@@ -102,6 +102,19 @@ fun EntityClass<*, *>.entityName(locale: Locale? = null): String? {
         ?: kClass.simpleName
 }
 
+/**
+ * Возвращает род сущности для текущего класса, используя аннотацию [I18nEntityName].
+ *
+ * @param locale локаль для поиска рода сущности в аннотации [I18nEntityName].
+ * */
+fun EntityClass<*, *>.entityGender(locale: Locale): Gender? {
+    val kClass = (javaClass.enclosingClass as Class<*>).kotlin
+    return kClass.findAnnotations<I18nEntityName>().ifEmpty { null }?.let { annotations ->
+        locale.toLanguageTag().let { lt -> annotations.find { it.key == lt }?.gender }
+            ?: annotations.find { it.key == locale.language }?.gender
+    }
+}
+
 /** не найдена или больше не доступна */
 const val entityNotFoundPostfixF = "не найдена или больше не доступна"
 

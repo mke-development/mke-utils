@@ -17,7 +17,13 @@ object I18n {
     }
 
     internal operator fun get(key: String, locale: Locale = defaultLocale, vararg args: Any?): String {
-        val pattern = bundle(locale).getString(key)
-        return MessageFormat(pattern, locale).format(args)
+        val bundle = runCatching { bundle(locale) }.getOrNull()
+        val pattern = if (bundle != null && bundle.containsKey(key)) {
+            bundle.getString(key)
+        } else {
+            key
+        }
+
+        return runCatching { MessageFormat(pattern, locale).format(args) }.getOrDefault(key)
     }
 }

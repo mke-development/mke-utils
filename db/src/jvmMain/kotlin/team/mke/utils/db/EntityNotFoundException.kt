@@ -11,13 +11,12 @@ import org.jetbrains.exposed.v1.dao.EntityClass
  * @param message сообщение исключения (необязательно, по умолчанию будет сгенерировано на основе класса сущности и id)
  * */
 class EntityNotFoundException(
-    val entity: EntityClass<*, *>, val id: Any? = null, message: String? = null
-) : RuntimeException(message ?: buildString {
-    append("Сущность \"").append(entity.entityName() ?: "").append("\"")
-    if (id != null) {
-        append(" с id $id")
-    }
-    append(" не найдена")
-}) {
-    constructor(entity: EntityClass<*, *>, id: EntityID<*>? = null, message: String? = null) : this(entity, id?.value, message)
+    val entity: EntityClass<*, *>, val id: Any? = null, message: String? = null,
+) : RuntimeException(message) {
+
+    constructor(entity: EntityClass<*, *>, id: EntityID<*>? = null, message: String? = null) : this(
+        entity,
+        id?.value,
+        message
+    )
 }
