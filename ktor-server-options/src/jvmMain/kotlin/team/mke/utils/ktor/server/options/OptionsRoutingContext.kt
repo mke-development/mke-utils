@@ -4,6 +4,7 @@ import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
 import io.github.smiley4.ktoropenapi.put
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -20,12 +21,25 @@ import ru.raysmith.utils.letIf
 import ru.raysmith.utils.wrap
 import team.mke.utils.ktor.openapi.Method
 import team.mke.utils.ktor.openapi.OpenApiRouteBlock
+import team.mke.utils.ktor.server.ext.respondError
+import team.mke.utils.model.ErrorDTO
 import team.mke.utils.model.OptionValue
 import kotlin.jvm.internal.MutablePropertyReference0
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.jvm.isAccessible
 
-class OptionsRoutingContext {
+class OptionsRoutingContext(
+    val defaultCheckAccess: (suspend ApplicationCall.() -> Boolean)? = null
+) {
+
+    context(route: Route, config: OptionsPluginConfiguration)
+    fun withCheckAccess(
+        checkAccess: suspend ApplicationCall.() -> Boolean,
+        block: context(Route, OptionsPluginConfiguration) OptionsRoutingContext.() -> Unit
+    ) {
+        val childContext = OptionsRoutingContext(defaultCheckAccess = checkAccess)
+        block(route, config, childContext)
+    }
 
     context(_: Route, config: OptionsPluginConfiguration)
     @OptIn(ExperimentalSerializationApi::class)
@@ -40,8 +54,9 @@ class OptionsRoutingContext {
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
         noinline onUpdate: suspend (newValue: T) -> Unit = {},
+        noinline checkAccess: (suspend ApplicationCall.() -> Boolean)? = defaultCheckAccess,
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
-    ) = setup(property, docs.Get, docs.Put, docs.Test, mutex, path, returnOnLocked, serializer, test, onUpdate, verification)
+    ) = setup(property, docs.Get, docs.Put, docs.Test, mutex, path, returnOnLocked, serializer, test, onUpdate, checkAccess, verification)
 
     context(route: Route, config: OptionsPluginConfiguration)
     @OptIn(ExperimentalSerializationApi::class)
@@ -58,6 +73,7 @@ class OptionsRoutingContext {
             ?: ContextualSerializer(typeInfo<T>().type)) as KSerializer<T & Any>,
         noinline test: (suspend RoutingContext.(T?) -> Unit)? = null,
         noinline onUpdate: suspend (newValue: T) -> Unit = {},
+        noinline checkAccess: (suspend ApplicationCall.() -> Boolean)? = defaultCheckAccess,
         noinline verification: Verification<T>.(newValue: T) -> Unit = {}
     ) {
 
@@ -83,7 +99,7 @@ class OptionsRoutingContext {
                                 verification(newValue)
                             }
                         }
-                        return@OptionHandler true
+                        return@OptionHandler previousValue != newValue
                     } catch (e: Exception) {
                         delegate.set(previousValue)
                         throw e
@@ -98,12 +114,22 @@ class OptionsRoutingContext {
                 },
                 onUpdate = onUpdate,
                 verification = verification,
-                json = config.json
+                json = config.json,
+                checkAccess = checkAccess
             )
 
             handler.register(path)
 
             get(docsGet) {
+                if (handler.checkAccess != null && !handler.checkAccess.invoke(call)) {
+                    call.respondError(
+                        message = "Доступ запрещен",
+                        description = "Access denied for option '$path'",
+                        status = HttpStatusCode.Forbidden
+                    )
+                    return@get
+                }
+
                 call.respond(config.json.encodeToJsonElement(
                     serializer = OptionValue.serializer(serializer),
                     value = handler.get() as OptionValue<T & Any>
@@ -111,6 +137,15 @@ class OptionsRoutingContext {
             }
 
             put(docsPut) {
+                if (handler.checkAccess != null && !handler.checkAccess.invoke(call)) {
+                    call.respondError(
+                        message = "Доступ запрещен",
+                        description = "Access denied for option '$path'",
+                        status = HttpStatusCode.Forbidden
+                    )
+                    return@put
+                }
+
                 if (returnOnLocked && handler.mutex != null && handler.mutex.isLocked) {
                     call.respond(HttpStatusCode.Locked)
                     return@put
@@ -153,6 +188,15 @@ class OptionsRoutingContext {
 
             if (test != null) {
                 post("/test", docsTest ?: {}) {
+                    if (handler.checkAccess != null && !handler.checkAccess.invoke(call)) {
+                        call.respondError(
+                            message = "Доступ запрещен",
+                            description = "Access denied for option '$path'",
+                            status = HttpStatusCode.Forbidden
+                        )
+                        return@post
+                    }
+
                     val body = call.receiveNullable<T>()
                     test(body)
                     call.respond(HttpStatusCode.OK)

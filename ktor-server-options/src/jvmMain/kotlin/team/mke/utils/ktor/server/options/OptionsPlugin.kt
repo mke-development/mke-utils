@@ -9,6 +9,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -16,8 +17,10 @@ import org.slf4j.Logger
 import ru.raysmith.utils.letIf
 import team.mke.utils.crashinterceptor.CrashInterceptor
 import team.mke.utils.ktor.openapi.OpenApiRouteBlock
+import team.mke.utils.ktor.openapi.forbidden
 import team.mke.utils.ktor.openapi.notFound
 import team.mke.utils.ktor.openapi.ok
+import team.mke.utils.ktor.server.ext.respondError
 import team.mke.utils.model.ErrorDTO
 import team.mke.utils.model.OptionValue
 import team.mke.utils.safe
@@ -56,6 +59,9 @@ class OptionsPluginConfiguration {
             }
             notFound {
                 description = "Ключ не найден"
+            }
+            forbidden {
+                description = "Отсутствуют права доступа к одному или нескольким ключам"
             }
         }
 
@@ -96,6 +102,9 @@ class OptionsPluginConfiguration {
             notFound {
                 description = "Ключ не найден"
             }
+            forbidden {
+                description = "Отсутствуют права доступа к одному или нескольким ключам"
+            }
         }
 
         putDocsSetup()
@@ -125,18 +134,24 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit 
         get(config.getDocs) {
             val keys = call.parameters.getAll("keys") ?: emptyList()
 
-            call.respond(
-                JsonObject(
-                    keys.map { key ->
-                        OptionHandler.registered[key]?.let { handler ->
-                            key to handler.encodeToJsonElement()
-                        } ?: run {
-                            call.respond(HttpStatusCode.NotFound, errorDTO(key, HttpMethod.Get))
-                            return@get
-                        }
-                    }.toMap()
-                )
-            )
+            val result = mutableMapOf<String, JsonElement>()
+            for (key in keys) {
+                val handler = OptionHandler.registered[key] ?: run {
+                    call.respond(HttpStatusCode.NotFound, errorDTO(key, HttpMethod.Get))
+                    return@get
+                }
+                if (handler.checkAccess != null && !handler.checkAccess.invoke(call)) {
+                    call.respondError(
+                        message = "Доступ запрещен",
+                        description = "Access denied for option '$key'",
+                        status = HttpStatusCode.Forbidden
+                    )
+                    return@get
+                }
+                result[key] = handler.encodeToJsonElement()
+            }
+
+            call.respond(JsonObject(result))
         }
 
         put(config.putDocs) {
@@ -162,6 +177,18 @@ fun Route.configureOptions(configuration: OptionsPluginConfiguration.() -> Unit 
                     }
                 }
             }.filterNotNull().toMap()
+
+            for ((key, _) in options) {
+                val handler = OptionHandler.registered[key]!!
+                if (handler.checkAccess != null && !handler.checkAccess.invoke(call)) {
+                    call.respondError(
+                        message = "Доступ запрещен",
+                        description = "Access denied for option '$key'",
+                        status = HttpStatusCode.Forbidden
+                    )
+                    return@put
+                }
+            }
 
             val rollbackData = options.map { (key, _) ->
                 key to OptionHandler.registered[key]!!.get().value

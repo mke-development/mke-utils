@@ -10,13 +10,11 @@ plugins {
     alias(libs.plugins.kover)
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.benManes.versions)
-    alias(libs.plugins.publish)
-    `version-catalog`
-    `maven-publish`
+    alias(libs.plugins.publish) apply false
 }
 
 group = "team.mke"
-version = "4.0.0-rc4"
+version = "4.0.0-rc5"
 
 subprojects {
     val isCatalog = name == "catalog"
@@ -37,7 +35,7 @@ subprojects {
         configure<MavenPublishBaseExtension> {
             publishToMavenCentral()
             signAllPublications()
-            coordinates(group.toString(), "${rootProject.name}-${name}", version.toString())
+            coordinates(group.toString(), "${rootProject.name}-${name.lowercase()}", version.toString())
 
             if (isCatalog) {
                 configure(VersionCatalog())
@@ -77,6 +75,25 @@ subprojects {
             }
         }
     }
+
+    plugins.withId("maven-publish") {
+        configure<PublishingExtension> {
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    url = uri("https://maven.pkg.github.com/mke-development/mke-utils")
+                    credentials {
+                        username = System.getenv("GIT_USERNAME")
+                            ?: System.getenv("GITHUB_ACTOR")
+                            ?: project.findProperty("gpr.user") as String?
+                        password = System.getenv("GIT_TOKEN_PUBLISH")
+                            ?: System.getenv("GITHUB_TOKEN")
+                            ?: project.findProperty("gpr.key") as String?
+                    }
+                }
+            }
+        }
+    }
 }
 
 tasks {
@@ -98,33 +115,4 @@ dependencies {
     }
 }
 
-catalog {
-    versionCatalog {
-        subprojects.forEach {
-            library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
-        }
 
-        bundle("ktor-client", listOf(
-            projects.ktorClient,
-            projects.ktorClientExtensionsJson,
-        ).map { it.name })
-
-        bundle("ktor-server", listOf(
-            projects.ktorServerOptions,
-            projects.ktorServerExtensionsValidator,
-        ).map { it.name })
-    }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("catalog") {
-            artifactId = "${rootProject.name}-catalog"
-            from(components["versionCatalog"])
-        }
-    }
-}
-
-mavenPublishing {
-    configure(VersionCatalog())
-}

@@ -8,7 +8,7 @@ catalog {
     versionCatalog {
         rootProject.subprojects.forEach {
             if (it.name != projectName) {
-                library(it.name, "team.mke:mke-utils-${it.name}:${it.version}")
+                library(it.name, "team.mke:mke-utils-${it.name.lowercase()}:${it.version}")
             }
         }
 

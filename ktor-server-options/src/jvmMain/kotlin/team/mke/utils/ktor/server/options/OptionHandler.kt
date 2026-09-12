@@ -1,5 +1,6 @@
 package team.mke.utils.ktor.server.options
 
+import io.ktor.server.application.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -17,6 +18,7 @@ data class OptionHandler<T : Any?>(
     val edit: suspend (newValue: T, shouldBeVerified: Boolean) -> Boolean,
     val encodeToJsonElement: suspend () -> JsonElement,
     val onUpdate: suspend (newValue: T) -> Unit,
+    val checkAccess: (suspend ApplicationCall.() -> Boolean)? = null,
     val verification: Verification<T>.(newValue: T) -> Unit
 ) {
     companion object {

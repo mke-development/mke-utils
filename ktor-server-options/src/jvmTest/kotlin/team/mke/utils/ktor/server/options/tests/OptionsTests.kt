@@ -204,4 +204,100 @@ class OptionsTests : DatabaseTest<OptionsTests>(team.mke.utils.ktor.server.optio
             foo shouldBe "upd"
         }
     }
+
+    "checkAccess - single routes" {
+        foo = "foo"
+
+        testOptionsApplication({
+            setup<String?>(::foo, docs, checkAccess = { request.headers["auth"] == "allow" })
+        }) { client ->
+            // GET forbidden
+            client.get("options/foo") {
+                header("auth", "deny")
+            }.status shouldBe HttpStatusCode.Forbidden
+
+            // GET allowed
+            client.get("options/foo") {
+                header("auth", "allow")
+            }.status shouldBe HttpStatusCode.OK
+
+            // PUT forbidden
+            client.put("options/foo") {
+                header("auth", "deny")
+                setBody("new_val")
+            }.status shouldBe HttpStatusCode.Forbidden
+            foo shouldBe "foo"
+
+            // PUT allowed
+            client.put("options/foo") {
+                header("auth", "allow")
+                setBody("new_val")
+            }.status shouldBe HttpStatusCode.OK
+            foo shouldBe "new_val"
+        }
+    }
+
+    "checkAccess - bulk routes" {
+        foo = "foo"
+        bar = "bar"
+
+        testOptionsApplication({
+            setup<String?>(::foo, docs) // no check
+            setup<String?>(::bar, docs, checkAccess = { request.headers["auth"] == "allow" })
+        }) { client ->
+            // GET bulk forbidden if one key is forbidden
+            client.get("/options") {
+                header("auth", "deny")
+                url { parameters.appendAll("keys", listOf("foo", "bar")) }
+            }.status shouldBe HttpStatusCode.Forbidden
+
+            // GET bulk allowed when header is valid
+            client.get("/options") {
+                header("auth", "allow")
+                url { parameters.appendAll("keys", listOf("foo", "bar")) }
+            }.status shouldBe HttpStatusCode.OK
+
+            // PUT bulk forbidden if one key is forbidden (and nothing should be updated)
+            client.put("/options") {
+                header("auth", "deny")
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("foo" to "upd_foo", "bar" to "upd_bar"))
+            }.status shouldBe HttpStatusCode.Forbidden
+
+            foo shouldBe "foo"
+            bar shouldBe "bar"
+
+            // PUT bulk allowed
+            client.put("/options") {
+                header("auth", "allow")
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("foo" to "upd_foo", "bar" to "upd_bar"))
+            }.status shouldBe HttpStatusCode.OK
+
+            foo shouldBe "upd_foo"
+            bar shouldBe "upd_bar"
+        }
+    }
+
+    "withCheckAccess scope" {
+        foo = "foo"
+        bar = "bar"
+
+        testOptionsApplication({
+            withCheckAccess(checkAccess = { request.headers["auth"] == "allow" }) {
+                setup<String?>(::foo, docs)
+                setup<String?>(::bar, docs)
+            }
+        }) { client ->
+            client.get("/options") {
+                header("auth", "deny")
+                url { parameters.appendAll("keys", listOf("foo")) }
+            }.status shouldBe HttpStatusCode.Forbidden
+
+            client.get("/options") {
+                header("auth", "allow")
+                url { parameters.appendAll("keys", listOf("bar")) }
+            }.status shouldBe HttpStatusCode.OK
+        }
+    }
 })

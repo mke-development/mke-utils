@@ -13,6 +13,7 @@ kotlin {
         jvmMain {
             dependencies {
                 api(projects.ktorOpenapi)
+                api(projects.ktorServerExtensions)
                 api(projects.crashInterceptor)
                 api(projects.json)
                 api(projects.common)
