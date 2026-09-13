@@ -1,7 +1,7 @@
 package team.mke.utils.ktor.server.ext.statuspages
 
 import io.ktor.http.*
-import io.ktor.i18n.locale
+import io.ktor.i18n.locale as i18nLocale
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
 import team.mke.utils.db.EntityNotFoundException
@@ -23,7 +23,7 @@ val ApplicationCall.locale: Locale
                     .firstOrNull()
                     ?.let { Locale.forLanguageTag(it.range) }
             }.getOrNull()
-        } ?: locale
+        } ?: runCatching { i18nLocale }.getOrNull() ?: ruLocale
     }
 
 private fun buildRussianMessage(e: EntityNotFoundException, locale: Locale): String {

@@ -1,23 +1,23 @@
 plugins {
     `convention-kmp`
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
     sourceSets {
-        commonMain {
-            dependencies {
-                api(projects.model)
-            }
-        }
         jvmMain {
             dependencies {
-                api(libs.ktor.server.core)
+                api(projects.db)
+                api(projects.json)
+
+                api(libs.kotlinx.serialization.json)
+                api(libs.raysmith.exposedOption)
             }
         }
+
         jvmTest {
             dependencies {
                 implementation(libs.kotest)
-                implementation(libs.ktor.server.test.host)
             }
         }
     }

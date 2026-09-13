@@ -29,5 +29,10 @@ kotlin {
                 implementation(libs.raysmith.utils)
             }
         }
+        jvmTest {
+            dependencies {
+                implementation(libs.kotest)
+            }
+        }
     }
 }

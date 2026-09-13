@@ -26,6 +26,7 @@ kotlin {
             dependencies {
                 implementation(projects.common)
                 implementation(projects.crashInterceptor)
+                implementation(projects.json)
 
                 implementation(libs.kotest)
                 implementation(libs.raysmith.utils)

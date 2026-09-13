@@ -240,7 +240,7 @@ inline fun <ID : Any, reified T : Entity<ID>> EntityClass<ID, T>.findByIdOrNull(
 
 fun <ID : Any, T : IdTable<ID>> Alias<T>?.getOrColumn(col: Column<EntityID<ID>>) = this?.get(col) ?: col
 
-fun Op<Boolean>?.and(op: () -> Op<Boolean>): Op<Boolean> {
+inline fun Op<Boolean>?.and(op: () -> Op<Boolean>): Op<Boolean> {
     return if (this != null) {
         this and op()
     } else {
@@ -249,7 +249,7 @@ fun Op<Boolean>?.and(op: () -> Op<Boolean>): Op<Boolean> {
 }
 
 @JvmName("andNullable")
-fun Op<Boolean>?.and(op: () -> Op<Boolean>?): Op<Boolean>? {
+inline fun Op<Boolean>?.and(op: () -> Op<Boolean>?): Op<Boolean>? {
     val opResult = op()
 
     return when {
@@ -259,7 +259,7 @@ fun Op<Boolean>?.and(op: () -> Op<Boolean>?): Op<Boolean>? {
     }
 }
 
-fun Op<Boolean>?.or(op: () -> Op<Boolean>): Op<Boolean> {
+inline fun Op<Boolean>?.or(op: () -> Op<Boolean>): Op<Boolean> {
     return if (this != null) {
         this or op()
     } else {
@@ -268,7 +268,7 @@ fun Op<Boolean>?.or(op: () -> Op<Boolean>): Op<Boolean> {
 }
 
 @JvmName("orNullable")
-fun Op<Boolean>?.or(op: () -> Op<Boolean>?): Op<Boolean>? {
+inline fun Op<Boolean>?.or(op: () -> Op<Boolean>?): Op<Boolean>? {
     val opResult = op()
 
     return when {
@@ -280,7 +280,7 @@ fun Op<Boolean>?.or(op: () -> Op<Boolean>?): Op<Boolean>? {
 
 @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
 @JvmName("andIfNotNullNullable")
-fun <T> Op<Boolean>?.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>? {
+inline fun <T> Op<Boolean>?.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>? {
     contract {
         (value != null) implies returnsNotNull()
     }
@@ -294,8 +294,7 @@ fun <T> Op<Boolean>?.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolea
     }
 }
 
-@OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
-fun <T> Op<Boolean>.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
+inline fun <T> Op<Boolean>.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
     return if (value != null) {
         this andIfNotNull op(value)
     }else {
@@ -303,7 +302,7 @@ fun <T> Op<Boolean>.andIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean
     }
 }
 
-fun Op<Boolean>?.andIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
+inline fun Op<Boolean>?.andIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
     return if (this != null) {
         this andIfNotNull op()
     } else {
@@ -311,7 +310,7 @@ fun Op<Boolean>?.andIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
     }
 }
 
-fun <T> Op<Boolean>.orIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
+inline fun <T> Op<Boolean>.orIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean> {
     return if (value != null) {
         this.orIfNotNull(op(value))
     } else {
@@ -319,7 +318,7 @@ fun <T> Op<Boolean>.orIfNotNull(value: T?, op: (T) -> Op<Boolean>?): Op<Boolean>
     }
 }
 
-fun Op<Boolean>?.orIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
+inline fun Op<Boolean>?.orIfNotNull(op: () -> Op<Boolean>?): Op<Boolean>? {
     return if (this != null) {
         this orIfNotNull op()
     } else {

@@ -8,6 +8,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.i18n.I18n
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as ServerContentNegotiation
@@ -56,7 +57,7 @@ class StatusPagesExtTest : FunSpec({
                 }
                 routing {
                     get("/test") {
-                        throw EntityNotFoundException(TestUser.Companion, 42)
+                        throw EntityNotFoundException(TestUser, 42)
                     }
                 }
             }
@@ -88,7 +89,7 @@ class StatusPagesExtTest : FunSpec({
                 }
                 routing {
                     get("/test") {
-                        throw EntityNotFoundException(TestUser.Companion, 42)
+                        throw EntityNotFoundException(TestUser, 42)
                     }
                 }
             }
@@ -120,7 +121,7 @@ class StatusPagesExtTest : FunSpec({
                 }
                 routing {
                     get("/test") {
-                        throw EntityNotFoundException(TestArticle.Companion, 10)
+                        throw EntityNotFoundException(TestArticle, 10)
                     }
                 }
             }
@@ -154,7 +155,7 @@ class StatusPagesExtTest : FunSpec({
                 }
                 routing {
                     get("/test") {
-                        throw EntityNotFoundException(TestUser.Companion, 99)
+                        throw EntityNotFoundException(TestUser, 99)
                     }
                 }
             }
@@ -189,7 +190,7 @@ class StatusPagesExtTest : FunSpec({
                 }
                 routing {
                     get("/test") {
-                        throw EntityNotFoundException(TestUser.Companion, 99)
+                        throw EntityNotFoundException(TestUser, 99)
                     }
                 }
             }
