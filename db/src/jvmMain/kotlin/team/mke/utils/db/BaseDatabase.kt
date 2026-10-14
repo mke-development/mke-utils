@@ -58,7 +58,7 @@ abstract class BaseDatabase {
         private val eagerCollectorCache = Collections.synchronizedMap<KClass<*>, Array<Prop>>(mutableMapOf())
         private var eagerCollectorCacheEnabled: Boolean = true
 
-        var eagerCollector: ((dtoClass: KClass<*>) -> Array<Prop>)? = null
+        var eagerCollector: ((dtoClass: KClass<*>, entityClass: EntityClass<*, *>?) -> Array<Prop>)? = null
         internal set
     }
 
@@ -245,7 +245,7 @@ abstract class BaseDatabase {
 
     fun registerEagerlyCollector(cacheEnabled: Boolean = true, collector: EagerFieldsCollector.(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?) -> Array<Prop>) {
         eagerCollectorCacheEnabled = cacheEnabled
-        eagerCollector = c@ { dtoClass: KClass<*> ->
+        eagerCollector = c@ { dtoClass: KClass<*>, entityClass: EntityClass<*, *>? ->
             if (eagerCollectorCacheEnabled) {
                 val res = eagerCollectorCache[dtoClass]
                 if (res != null) {
@@ -257,7 +257,7 @@ abstract class BaseDatabase {
                 override fun collect(dtoClass: KClass<*>, entityClass: EntityClass<*, *>?): Array<Prop> {
                     return collector(dtoClass, entityClass)
                 }
-            }.collect(dtoClass)
+            }.collect(dtoClass, entityClass)
 
         }
     }

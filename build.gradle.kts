@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "team.mke"
-version = "4.0.0-rc5"
+version = "4.0.0-rc6"
 
 subprojects {
     val isCatalog = name == "catalog"
