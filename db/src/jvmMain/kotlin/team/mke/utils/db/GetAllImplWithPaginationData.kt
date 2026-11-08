@@ -19,6 +19,7 @@ context(entityClass: EntityClass<ID, E>)
 fun <ID : Any, E : Entity<ID>, C : Column<*>, T : Comparable<T>> getAllImpl(
     paginationData: Pair<PaginationData<T>?, Pair<C, SortOrder>>? = null,
     defaultQuery: Op<Boolean>? = defaultQuery(entityClass.table),
+    defaultOrderBy: Pair<Column<*>, SortOrder>? = entityClass.table.defaultSort,
     onQuery: Query.() -> Unit = { },
     query: (() -> Op<Boolean>?)? = null
 ): SizedIterable<E> {
@@ -72,7 +73,9 @@ fun <ID : Any, E : Entity<ID>, C : Column<*>, T : Comparable<T>> getAllImpl(
                 query.orderBy(colData)
                     .limit(pageData!!.count)
             } else {
-                it.orderBy(entityClass.table.id to SortOrder.DESC)
+                if (defaultOrderBy != null) {
+                    it.orderBy(defaultOrderBy)
+                } else it
             }
         }
         .also { it.onQuery() }
