@@ -10,7 +10,7 @@ private val envs = mutableListOf<Env<*>>()
  * @see env
  * @see envRequired
  * */
-class Env<T : Any?>(val key: String, private val required: Boolean = false, private val getter: (key: String) -> T) {
+class Env<T>(val key: String, private val required: Boolean = false, private val getter: (key: String) -> T) {
     private var init = false
     private var cache: T? = null
 

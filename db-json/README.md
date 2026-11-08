@@ -9,7 +9,7 @@
 
 ## Основной API
 
-### `jsonTransformer<Wrapped>(json = Json)`
+### `jsonTransformer<Wrapped>(json = team.mke.utils.json.json)`
 
 Создает `ru.raysmith.exposedoption.Transformer<String, Wrapped>` для автоматической сериализации и десериализации объектов при сохранении в базу через свойства `option`:
 

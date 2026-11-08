@@ -52,6 +52,7 @@ class EnvironmentTests : FreeSpec({
 
     "required environment delegate should throw if environment not set" {
         shouldThrow<IllegalStateException> {
+            @Suppress("unused")
             val value by envRequired("SOME_ENV")
         }
     }
