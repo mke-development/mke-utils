@@ -61,7 +61,7 @@ abstract class DatabaseTest<T : DatabaseTest<T>>(
     private var container = MariaDBContainer("mariadb:11.8.6")
         .withDatabaseName(dbName)
         .withUsername("root")
-        .withPassword("")
+        .withUrlParam("sslMode", "trust")
         .withCommand(
             "--character-set-server=utf8mb4",
             "--collation-server=utf8mb4_unicode_ci",
