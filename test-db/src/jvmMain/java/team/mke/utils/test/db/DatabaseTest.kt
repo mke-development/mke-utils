@@ -137,7 +137,7 @@ abstract class DatabaseTest<T : DatabaseTest<T>>(
             container.start()
 
             connection = Database.connect(
-                url = "jdbc:mariadb://${container.host}:${container.firstMappedPort}/${dbName}",
+                url = container.jdbcUrl,
                 driver = container.driverClassName,
                 user = container.username,
                 password = container.password,
@@ -163,7 +163,7 @@ abstract class DatabaseTest<T : DatabaseTest<T>>(
             }
 
             try {
-                val systemDbUrl = "jdbc:mariadb://${container.host}:${container.firstMappedPort}/mysql"
+                val systemDbUrl = container.jdbcUrl.substringBeforeLast("/") + "/mysql"
                 DriverManager.getConnection(systemDbUrl, container.username, container.password).use { conn ->
                     conn.createStatement().use { stmt ->
                         stmt.execute("DROP DATABASE IF EXISTS `$dbName`")
