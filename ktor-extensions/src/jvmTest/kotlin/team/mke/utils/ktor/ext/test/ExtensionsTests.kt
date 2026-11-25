@@ -6,6 +6,7 @@ import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.utils.io.*
 import team.mke.utils.ktor.ext.prepareFile
+import java.io.File
 import java.util.UUID
 
 class ExtensionsTests : FreeSpec({
@@ -21,16 +22,16 @@ class ExtensionsTests : FreeSpec({
 
     "prepareFile should return correct path with provided nextName" {
         val partData = partData("file.txt")
-        partData.prepareFile("home") { newName }.path shouldBe "home\\$newName.txt"
+        partData.prepareFile("home") { newName }.path shouldBe "home${File.separator}$newName.txt"
     }
 
     "prepareFile should use fallback extension when original filename has no extension" {
         val partData = partData("file")
-        partData.prepareFile("home", "unk") { newName }.path shouldBe "home\\$newName.unk"
+        partData.prepareFile("home", "unk") { newName }.path shouldBe "home${File.separator}$newName.unk"
     }
 
     "prepareFile should return correct filename when original filename has no extension and no fallback is provided" {
         val partData = partData("file")
-        partData.prepareFile("home") { newName }.path shouldBe "home\\$newName"
+        partData.prepareFile("home") { newName }.path shouldBe "home${File.separator}$newName"
     }
 })
