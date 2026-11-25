@@ -17,8 +17,12 @@ inline fun <reified T, S : KSerializer<T>> Parameters.get(param: String, seriali
 /**
  * Return deserialized an HTTP [parameter] or throw [MissingRequestParameterException] if the parameter is not contained
  * */
-inline fun <reified T, S : KSerializer<T>> Parameters.getOrFail(parameter: String, serializer: S): T {
-    return get(parameter, serializer) ?: throw MissingRequestParameterException(parameter)
+inline fun <reified T, S : KSerializer<T>> Parameters.getOrFail(
+    parameter: String,
+    serializer: S,
+    xml: XML = team.mke.utils.xml.xml,
+): T {
+    return get(parameter, serializer, xml) ?: throw MissingRequestParameterException(parameter)
 }
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")

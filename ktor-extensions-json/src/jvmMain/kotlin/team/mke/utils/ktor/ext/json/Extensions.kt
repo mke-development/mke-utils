@@ -43,8 +43,12 @@ inline fun <reified T> Parameters.get(
 /**
  * Return deserialized an HTTP [parameter] or throw [MissingRequestParameterException] if the parameter is not contained
  * */
-inline fun <reified T, S : KSerializer<T>> Parameters.getOrFail(parameter: String, serializer: S): T {
-    return get(parameter, serializer) ?: throw MissingRequestParameterException(parameter)
+inline fun <reified T, S : KSerializer<T>> Parameters.getOrFail(
+    parameter: String,
+    serializer: S,
+    json: Json = team.mke.utils.json.json
+): T {
+    return get(parameter, serializer, json) ?: throw MissingRequestParameterException(parameter)
 }
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
